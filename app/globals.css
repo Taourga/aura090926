@@ -60,6 +60,8 @@ h3 { margin: 0; font-size: 1rem; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 3px solid rgba(12,140,138,.17); border-color: var(--teal); }
 .form-error { background:#fff1f0; color:var(--danger); border:1px solid #fecdc9; padding:9px 11px; border-radius:8px; margin:0 0 14px; font-size:.92rem; }
 .form-success { background:#ecfdf3; color:#067647; border:1px solid #abefc6; padding:9px 11px; border-radius:8px; margin:0 0 14px; font-size:.92rem; }
+.login-help { margin:16px 0 0; text-align:center; font-size:.9rem; }
+.login-help a { color:var(--teal-deep); font-weight:700; }
 
 .portal { min-height:100vh; display:grid; grid-template-columns: 258px minmax(0, 1fr); }
 .sidebar { background: var(--navy); color: #e6f1f5; padding: 23px 15px; display:flex; flex-direction:column; gap:24px; }

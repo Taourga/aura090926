@@ -36,6 +36,7 @@ export function LoginForm() {
         <label className="field">Mot de passe<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
         <button className="button button-primary" style={{ width: "100%" }} disabled={loading}>{loading ? "Connexion..." : "Se connecter"}</button>
       </form>
+      <p className="login-help"><Link href="/forgot-password">Mot de passe oublié&nbsp;?</Link></p>
       <p style={{ marginTop: 18, fontSize: ".88rem" }}>Votre accès est créé par la clinique. <Link href="/" style={{ color: "var(--teal-deep)", fontWeight: 700 }}>Retour à l&apos;accueil</Link></p>
     </section>
   </main>;
