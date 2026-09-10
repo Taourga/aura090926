@@ -5,6 +5,13 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { roleLabels, type PermissionStatus } from "@/lib/types";
+import {
+  StaffDashboard,
+  type OperationalRole,
+  type StaffAppointment,
+  type StaffPermission,
+  type StaffStay,
+} from "@/components/staff-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +31,18 @@ export default async function PortalPage() {
       <div className="metric-grid"><div className="metric"><span>Prochain rendez-vous</span><strong>{appointments?.[0] ? formatTime(appointments[0].starts_at) : "—"}</strong><div className="metric-detail">{appointments?.[0]?.title || "Aucun rendez-vous à venir"}</div></div><div className="metric"><span>Activités inscrites</span><strong>{enrollments?.length || 0}</strong><div className="metric-detail">Voir mon planning</div></div><div className="metric"><span>Permissions</span><strong>{permissions?.filter((item) => item.status === "approved").length || 0}</strong><div className="metric-detail">Sorties autorisées</div></div><div className="metric"><span>Informations</span><strong>{posts?.length || 0}</strong><div className="metric-detail">Nouveautés de la clinique</div></div></div>
       <div className="dashboard-grid"><div className="stack"><section className="card"><div className="card-header"><div><h2>Mon planning</h2><p className="card-subtitle">Vos prochains rendez-vous</p></div><Link className="button button-secondary button-small" href="/portal/activities">Activités</Link></div><div className="card-body"><div className="list">{appointments?.length ? appointments.map((item) => <div className="list-row" key={item.id}><div className="time">{formatTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{item.location || "Lieu à confirmer"}</div></div><span className="badge badge-info">Rendez-vous</span></div>) : <p className="empty">Aucun rendez-vous planifié pour le moment.</p>}</div></div></section><section className="card"><div className="card-header"><div><h2>Mes permissions</h2><p className="card-subtitle">Suivi de vos dernières demandes</p></div><Link className="button button-secondary button-small" href="/portal/permissions">Gérer</Link></div><div className="card-body"><div className="list">{permissions?.length ? permissions.map((item) => <div className="list-row" key={item.id}><div className="time">{formatTime(item.departure_at)}</div><div><div className="row-title">Sortie prévue le {new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(item.departure_at))}</div><div className="row-meta">Retour prévu : {formatDateTime(item.return_at)}</div></div><StatusBadge status={item.status as PermissionStatus} /></div>) : <p className="empty">Vous n&apos;avez pas encore demandé de permission.</p>}</div></div></section></div><aside className="card"><div className="card-header"><div><h2>À savoir</h2><p className="card-subtitle">Informations de la clinique</p></div><Link className="button button-secondary button-small" href="/portal/information">Tout voir</Link></div><div className="card-body"><div className="list">{posts?.length ? posts.map((post) => <div className="list-row" key={post.id} style={{ gridTemplateColumns: "1fr" }}><div><div className="row-title">{post.title}</div><div className="row-meta">{post.body}</div></div></div>) : <p className="empty">Aucune information nouvelle.</p>}</div></div></aside></div>
     </PortalShell>;
+  }
+
+  const operationalRoles: OperationalRole[] = ["doctor", "manager", "nurse", "reception"];
+
+  if (operationalRoles.includes(profile.role as OperationalRole)) {
+    const role = profile.role as OperationalRole;
+    const [{ data: permissions }, { data: stays }, { data: appointments }] = await Promise.all([
+      supabase.from("permission_requests").select("id, departure_at, return_at, reason, status, doctor_decision, manager_decision, departed_at, returned_at, patient:profiles!permission_requests_patient_id_fkey(full_name, phone)").in("status", ["submitted", "waiting", "approved", "departed"]).order("departure_at").limit(50),
+      supabase.from("patient_stays").select("id, presence, room_number, ward:wards(name, floor), patient:profiles!patient_stays_patient_id_fkey(full_name, phone)").is("ended_at", null).order("room_number").limit(100),
+      supabase.from("appointments").select("id, title, starts_at, location, patient:profiles!appointments_patient_id_fkey(full_name)").gte("starts_at", new Date().toISOString()).order("starts_at").limit(12),
+    ]);
+    return <PortalShell profile={profile}><StaffDashboard role={role} firstName={profile.full_name.split(" ")[0]} permissions={(permissions || []) as StaffPermission[]} stays={(stays || []) as StaffStay[]} appointments={(appointments || []) as StaffAppointment[]} /></PortalShell>;
   }
 
   const [{ count: pendingCount }, { count: approvedCount }, { count: departedCount }, { data: upcomingAppointments }] = await Promise.all([
