@@ -9,8 +9,17 @@ export const dynamic = "force-dynamic";
 
 export default async function AppointmentsPage() {
   const profile = await requireProfile();
-  if (!appointmentRoles.includes(profile.role)) redirect("/portal");
   const supabase = await createClient();
+
+  if (profile.role === "patient") {
+    const { data: appointments } = await supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes").eq("patient_id", profile.id).gte("ends_at", new Date().toISOString()).order("starts_at").limit(50);
+    return <PortalShell profile={profile}>
+      <div className="page-intro"><div><h1>Mon planning</h1><p>Vos rendez-vous à venir pendant le séjour.</p></div></div>
+      <section className="card"><div className="card-header"><div><h2>Rendez-vous</h2><p className="card-subtitle">Les modifications sont communiquées par le portail.</p></div></div><div className="card-body"><div className="list">{appointments?.length ? appointments.map((item) => <div className="list-row" key={item.id}><div className="time">{formatDateTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{item.location || "Lieu à confirmer"}{item.notes ? ` · ${item.notes}` : ""}</div></div><span className="badge badge-info">Prévu</span></div>) : <p className="empty">Aucun rendez-vous n’est planifié pour le moment.</p>}</div></div></section>
+    </PortalShell>;
+  }
+
+  if (!appointmentRoles.includes(profile.role)) redirect("/portal");
   const [{ data: patients }, { data: appointments }, { data: externalAppointments }] = await Promise.all([
     supabase.from("profiles").select("id, full_name").eq("role", "patient").eq("active", true).order("full_name"),
     supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes, patient:profiles!appointments_patient_id_fkey(full_name)").gte("ends_at", new Date().toISOString()).order("starts_at").limit(80),

@@ -13,8 +13,7 @@ const navItems: NavItem[] = [
   { href: "/portal/patients", label: "Patients", roles: ["doctor"] },
   { href: "/portal/permissions", label: "Permissions" },
   { href: "/portal/activities", label: "Activités", hiddenFor: ["doctor"] },
-  { href: "/portal/appointments", label: "Planning", roles: ["doctor", "manager", "psychologist", "nurse", "provider"] },
-  { href: "/portal/sport-room", label: "Salle de sport" },
+  { href: "/portal/appointments", label: "Planning", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
   { href: "/portal/menus", label: "Menus", hiddenFor: ["doctor"] },
   { href: "/portal/information", label: "Informations", hiddenFor: ["doctor"] },
   { href: "/portal/admin", label: "Administration", roles: ["admin"] },
@@ -31,6 +30,7 @@ function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: bo
 
 export function PortalShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
   const initials = profile.full_name.split(" ").filter(Boolean).slice(0, 2).map((name) => name[0]).join("").toUpperCase();
+  const stayDetails = profile.activeStay ? `Chambre ${profile.activeStay.room_number || "—"} · Entrée le ${new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(profile.activeStay.started_at))}` : null;
   return <div className="portal">
     <aside className="sidebar">
       <Link href="/portal" className="brand"><span className="brand-mark">A</span>AURA</Link>
@@ -40,7 +40,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
     <div className="portal-main">
       <header className="portal-header">
         <div><div className="role-chip">{roleLabels[profile.role]}</div><p>Clinique privée</p></div>
-        <div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong><br /><LogoutButton /></div></div>
+        <div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div>
       </header>
       <main className="content">{children}</main>
       <Navigation profile={profile} mobile />

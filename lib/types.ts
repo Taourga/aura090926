@@ -25,6 +25,7 @@ export type Profile = {
   role: AppRole;
   active: boolean;
   phone: string | null;
+  activeStay?: { room_number: string | null; started_at: string } | null;
 };
 
 export const roleLabels: Record<AppRole, string> = {

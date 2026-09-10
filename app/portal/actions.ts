@@ -3,12 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
+import { sendPatientUpdateEmails, type NotificationRecipient } from "@/lib/patient-notifications";
 import type { AppRole } from "@/lib/types";
 
 type ActionResult = { error?: string; success?: string };
 
 function refreshPortal() {
   ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
+}
+
+async function notifyPatients(supabase: Awaited<ReturnType<typeof createClient>>, subject: string, patientId?: string) {
+  const { data } = await supabase.rpc("notification_recipients", { p_patient_id: patientId || null });
+  await sendPatientUpdateEmails((data || []) as NotificationRecipient[], subject);
 }
 
 export async function submitPermission(input: { departureAt: string; returnAt: string; reason: string }): Promise<ActionResult> {
@@ -90,8 +96,26 @@ export async function createAppointment(input: { patientId: string; title: strin
     notes: input.notes.trim() || null,
   });
   if (error) return { error: error.message };
+  await notifyPatients(supabase, "Votre planning AURA a été mis à jour.", input.patientId);
   refreshPortal();
   return { success: "Le rendez-vous a été ajouté au planning du patient." };
+}
+
+export async function createActivity(input: { title: string; description: string; startsAt: string; endsAt: string; location: string; capacity: number }): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "governance" && profile.role !== "admin") return { error: "Vous n’êtes pas autorisé à ajouter une activité." };
+  if (!input.title.trim() || !input.startsAt || !input.endsAt || !Number.isInteger(input.capacity) || input.capacity < 1 || new Date(input.endsAt) <= new Date(input.startsAt)) {
+    return { error: "Vérifiez le titre, les horaires et le nombre de places." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("activities").insert({
+    title: input.title.trim(), description: input.description.trim() || null, starts_at: input.startsAt, ends_at: input.endsAt,
+    location: input.location.trim() || null, capacity: input.capacity, active: true,
+  });
+  if (error) return { error: error.message };
+  await notifyPatients(supabase, "Une nouvelle activité est disponible dans AURA.");
+  refreshPortal();
+  return { success: "L’activité est publiée." };
 }
 
 export async function scheduleDoctorRound(input: { floorNumber: number; scheduledAt: string }): Promise<ActionResult> {
@@ -107,6 +131,7 @@ export async function scheduleDoctorRound(input: { floorNumber: number; schedule
     scheduled_at: scheduledAt.toISOString(),
   });
   if (error) return { error: error.message };
+  await notifyPatients(supabase, "Votre planning AURA a été mis à jour.");
   refreshPortal();
   return { success: "L'heure de passage est publiée pour les patients de cet étage." };
 }
@@ -167,6 +192,7 @@ export async function updateSportRoomSchedule(input: { scheduleDate: string; ope
     updated_at: new Date().toISOString(),
   }, { onConflict: "schedule_date" });
   if (error) return { error: error.message };
+  await notifyPatients(supabase, "Le planning de la salle de sport a été mis à jour.");
   refreshPortal();
   return { success: "Le planning de la salle de sport est mis à jour." };
 }

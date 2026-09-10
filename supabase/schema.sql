@@ -19,6 +19,7 @@ create table if not exists public.profiles (
   role public.app_role not null default 'patient',
   active boolean not null default true,
   phone text,
+  email text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -186,8 +187,8 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, coalesce(nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''), split_part(new.email, '@', 1)))
+  insert into public.profiles (id, full_name, email)
+  values (new.id, coalesce(nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''), split_part(new.email, '@', 1)), new.email)
   on conflict (id) do nothing;
   return new;
 end; $$;
@@ -211,6 +212,19 @@ create or replace function public.is_clinical_or_reception()
 returns boolean language sql stable security definer set search_path = public as $$
   select coalesce(public.current_role() in ('doctor'::public.app_role, 'manager'::public.app_role, 'reception'::public.app_role, 'psychologist'::public.app_role, 'nurse'::public.app_role, 'provider'::public.app_role, 'admin'::public.app_role), false)
 $$;
+
+create or replace function public.notification_recipients(p_patient_id uuid default null)
+returns table(full_name text, email text)
+language sql stable security definer set search_path = public as $$
+  select p.full_name, p.email
+  from public.profiles p
+  where p.role = 'patient'::public.app_role
+    and p.active = true
+    and p.email is not null
+    and (p_patient_id is null or p.id = p_patient_id)
+    and public.current_role() in ('doctor'::public.app_role, 'manager'::public.app_role, 'psychologist'::public.app_role, 'provider'::public.app_role, 'governance'::public.app_role, 'coach'::public.app_role, 'admin'::public.app_role)
+$$;
+grant execute on function public.notification_recipients(uuid) to authenticated;
 
 create or replace function public.write_audit(p_event text, p_entity_type text, p_entity_id uuid, p_metadata jsonb default '{}'::jsonb)
 returns void language plpgsql security definer set search_path = public as $$

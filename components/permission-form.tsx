@@ -17,8 +17,8 @@ export function PermissionForm() {
   return <form onSubmit={onSubmit}>
     <ActionFeedback message={result.success} error={result.error} />
     <div className="form-grid">
-      <label className="field">Départ souhaité<input name="departureAt" type="datetime-local" required /></label>
-      <label className="field">Retour souhaité<input name="returnAt" type="datetime-local" required /></label>
+      <label className="field">Début de la permission<input name="departureAt" type="datetime-local" required /></label>
+      <label className="field">Fin de la permission<input name="returnAt" type="datetime-local" required /></label>
       <label className="field wide">Motif ou commentaire (facultatif)<textarea name="reason" placeholder="Ex. rendez-vous familial" /></label>
     </div>
     <button className="button button-primary" disabled={loading}>{loading ? "Envoi..." : "Envoyer ma demande"}</button>

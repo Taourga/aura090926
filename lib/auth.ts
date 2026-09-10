@@ -17,7 +17,16 @@ export async function requireProfile(): Promise<Profile> {
     .single();
 
   if (!profile || !profile.active) redirect("/login?error=access");
-  return profile as Profile;
+  if (profile.role !== "patient") return profile as Profile;
+
+  const { data: activeStay } = await supabase
+    .from("patient_stays")
+    .select("room_number, started_at")
+    .eq("patient_id", user.id)
+    .is("ended_at", null)
+    .maybeSingle();
+
+  return { ...profile, activeStay } as Profile;
 }
 
 export function canManagePermissions(role: AppRole) {
