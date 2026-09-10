@@ -4,7 +4,7 @@
 create extension if not exists pgcrypto;
 
 do $$ begin
-  create type public.app_role as enum ('patient', 'doctor', 'manager', 'reception', 'psychologist', 'governance', 'nurse', 'admin', 'provider');
+  create type public.app_role as enum ('patient', 'doctor', 'manager', 'reception', 'psychologist', 'governance', 'coach', 'nurse', 'admin', 'provider');
 exception when duplicate_object then null; end $$;
 do $$ begin
   create type public.permission_status as enum ('submitted', 'waiting', 'approved', 'refused', 'cancelled', 'departed', 'returned');
@@ -138,6 +138,18 @@ create table if not exists public.menu_items (
   unique(service_date, meal)
 );
 
+create table if not exists public.sport_room_schedules (
+  id uuid primary key default gen_random_uuid(),
+  schedule_date date not null unique,
+  opens_at time not null default '09:00',
+  closes_at time not null default '12:00',
+  note text,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (closes_at > opens_at)
+);
+
 create table if not exists public.audit_events (
   id bigint generated always as identity primary key,
   actor_id uuid references public.profiles(id) on delete set null,
@@ -166,6 +178,8 @@ drop trigger if exists information_updated_at on public.information_posts;
 create trigger information_updated_at before update on public.information_posts for each row execute function public.set_updated_at();
 drop trigger if exists menus_updated_at on public.menu_items;
 create trigger menus_updated_at before update on public.menu_items for each row execute function public.set_updated_at();
+drop trigger if exists sport_room_schedules_updated_at on public.sport_room_schedules;
+create trigger sport_room_schedules_updated_at before update on public.sport_room_schedules for each row execute function public.set_updated_at();
 
 -- Un profil patient est créé automatiquement après la création d'un compte Auth.
 create or replace function public.handle_new_user()
@@ -214,6 +228,7 @@ alter table public.activity_enrollments enable row level security;
 alter table public.appointments enable row level security;
 alter table public.information_posts enable row level security;
 alter table public.menu_items enable row level security;
+alter table public.sport_room_schedules enable row level security;
 alter table public.audit_events enable row level security;
 
 create policy "profiles self or authorized staff read" on public.profiles for select to authenticated using (
@@ -245,6 +260,10 @@ create policy "signed in users read information" on public.information_posts for
 create policy "governance manage information" on public.information_posts for all to authenticated using (public.current_role() in ('governance'::public.app_role, 'admin'::public.app_role)) with check (public.current_role() in ('governance'::public.app_role, 'admin'::public.app_role));
 create policy "signed in users read menus" on public.menu_items for select to authenticated using (true);
 create policy "governance manage menus" on public.menu_items for all to authenticated using (public.current_role() in ('governance'::public.app_role, 'admin'::public.app_role)) with check (public.current_role() in ('governance'::public.app_role, 'admin'::public.app_role));
+create policy "signed in users read sport room schedules" on public.sport_room_schedules for select to authenticated using (true);
+create policy "coach and admin insert sport room schedules" on public.sport_room_schedules for insert to authenticated with check (public.current_role() in ('coach'::public.app_role, 'admin'::public.app_role) and updated_by = auth.uid());
+create policy "coach and admin update sport room schedules" on public.sport_room_schedules for update to authenticated using (public.current_role() in ('coach'::public.app_role, 'admin'::public.app_role)) with check (public.current_role() in ('coach'::public.app_role, 'admin'::public.app_role) and updated_by = auth.uid());
+create policy "coach and admin delete sport room schedules" on public.sport_room_schedules for delete to authenticated using (public.current_role() in ('coach'::public.app_role, 'admin'::public.app_role));
 create policy "admins read audit log" on public.audit_events for select to authenticated using (public.current_role() = 'admin'::public.app_role);
 
 create or replace function public.submit_permission_request(p_departure_at timestamptz, p_return_at timestamptz, p_reason text default null)

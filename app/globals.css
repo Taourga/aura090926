@@ -205,6 +205,19 @@ h3 { margin: 0; font-size: 1rem; }
 .passage-row strong { display:block; font-size:.9rem; }
 .passage-row p { margin:3px 0 0; color:var(--muted); font-size:.83rem; }
 
+.sport-week, .weekly-menu-grid { display:grid; gap:12px; }
+.sport-day { display:grid; grid-template-columns:minmax(220px, .72fr) minmax(0, 1.28fr); gap:18px; align-items:center; padding:15px; border:1px solid #d8e7e8; border-radius:12px; background:#f8fcfc; }
+.sport-day > div { display:grid; gap:5px; }
+.sport-day strong { color:var(--navy); font-size:.92rem; text-transform:capitalize; }
+.sport-hours { color:var(--teal-deep); font-size:.84rem; font-weight:800; }
+.sport-day p { margin:0; color:var(--muted); font-size:.87rem; }
+.weekly-menu-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.weekly-menu-day { padding:16px; border:1px solid var(--line); border-radius:12px; background:#fbfdfd; }
+.weekly-menu-day h3 { margin:0 0 12px; color:var(--navy); font-size:.98rem; text-transform:capitalize; }
+.weekly-menu-meal { padding:10px 0; border-top:1px solid var(--line); }
+.weekly-menu-meal strong { color:var(--teal-deep); display:block; font-size:.8rem; }
+.weekly-menu-meal p { margin:4px 0 0; color:var(--muted); font-size:.84rem; line-height:1.45; }
+
 .doctor-patient-workspace { display:grid; grid-template-columns:minmax(250px, .31fr) minmax(0, 1fr); gap:18px; align-items:start; }
 .patient-directory { position:sticky; top:18px; max-height:calc(100vh - 120px); overflow:auto; }
 .patient-directory-list { display:grid; padding:7px; }
@@ -260,6 +273,7 @@ h3 { margin: 0; font-size: 1rem; }
   .doctor-patient-workspace { grid-template-columns:1fr; }
   .patient-directory { position:static; max-height:none; }
   .doctor-round-content { grid-template-columns:1fr; }
+  .weekly-menu-grid { grid-template-columns:1fr; }
   .compact-form { border-right:0; border-bottom:1px solid var(--line); }
 }
 @media (max-width: 560px) {
@@ -294,4 +308,5 @@ h3 { margin: 0; font-size: 1rem; }
   .history-row { grid-template-columns:12px minmax(0, 1fr); }
   .history-row time { grid-column:2; text-align:left; }
   .timeline-row--external { grid-template-columns:1fr; }
+  .sport-day { grid-template-columns:1fr; gap:8px; }
 }

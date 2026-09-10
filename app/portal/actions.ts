@@ -8,7 +8,7 @@ import type { AppRole } from "@/lib/types";
 type ActionResult = { error?: string; success?: string };
 
 function refreshPortal() {
-  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/admin"].forEach((path) => revalidatePath(path));
+  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
 }
 
 export async function submitPermission(input: { departureAt: string; returnAt: string; reason: string }): Promise<ActionResult> {
@@ -149,6 +149,26 @@ export async function addMenuItem(input: { serviceDate: string; meal: string; de
   if (error) return { error: error.message };
   refreshPortal();
   return { success: "Le menu est enregistré." };
+}
+
+export async function updateSportRoomSchedule(input: { scheduleDate: string; opensAt: string; closesAt: string; note: string }): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "coach" && profile.role !== "admin") return { error: "Vous n’êtes pas autorisé à modifier le planning de la salle." };
+  if (!input.scheduleDate || !input.opensAt || !input.closesAt || input.closesAt <= input.opensAt) {
+    return { error: "L’horaire de fermeture doit être postérieur à l’ouverture." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("sport_room_schedules").upsert({
+    schedule_date: input.scheduleDate,
+    opens_at: input.opensAt,
+    closes_at: input.closesAt,
+    note: input.note.trim() || null,
+    updated_by: profile.id,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "schedule_date" });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: "Le planning de la salle de sport est mis à jour." };
 }
 
 export async function updateUser(input: { userId: string; role: AppRole; active: boolean }): Promise<ActionResult> {

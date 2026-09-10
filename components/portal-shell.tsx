@@ -14,6 +14,8 @@ const navItems: NavItem[] = [
   { href: "/portal/permissions", label: "Permissions" },
   { href: "/portal/activities", label: "Activités", hiddenFor: ["doctor"] },
   { href: "/portal/appointments", label: "Planning", roles: ["doctor", "manager", "psychologist", "nurse", "provider"] },
+  { href: "/portal/sport-room", label: "Salle de sport" },
+  { href: "/portal/menus", label: "Menus", hiddenFor: ["doctor"] },
   { href: "/portal/information", label: "Informations", hiddenFor: ["doctor"] },
   { href: "/portal/admin", label: "Administration", roles: ["admin"] },
 ];

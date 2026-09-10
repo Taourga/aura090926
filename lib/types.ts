@@ -5,6 +5,7 @@ export type AppRole =
   | "reception"
   | "psychologist"
   | "governance"
+  | "coach"
   | "nurse"
   | "admin"
   | "provider";
@@ -33,6 +34,7 @@ export const roleLabels: Record<AppRole, string> = {
   reception: "Accueil",
   psychologist: "Psychologue",
   governance: "Gouvernance",
+  coach: "Coach sportif",
   nurse: "Infirmier",
   admin: "Administrateur",
   provider: "Intervenant",
