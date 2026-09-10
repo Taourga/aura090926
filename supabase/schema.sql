@@ -275,7 +275,7 @@ begin
   if not found then raise exception 'Permission introuvable'; end if;
   if v_request.status not in ('submitted'::public.permission_status, 'waiting'::public.permission_status) then raise exception 'Cette permission ne peut plus être revue'; end if;
   if v_role = 'doctor'::public.app_role then
-    if v_request.doctor_decision is not null then raise exception 'La décision médicale a déjà été enregistrée'; end if;
+    if v_request.doctor_decision is not null then raise exception 'La validation du médecin a déjà été enregistrée'; end if;
     update public.permission_requests set doctor_decision = p_decision::public.review_decision, doctor_decided_by = auth.uid(), doctor_decided_at = now(), doctor_comment = nullif(trim(p_comment), '') where id = p_permission_id;
   else
     if v_request.manager_decision is not null then raise exception 'La décision du cadre a déjà été enregistrée'; end if;
@@ -354,3 +354,74 @@ grant execute on function public.activity_enrollment_counts() to authenticated;
 
 -- Après création du premier utilisateur dans Authentication > Users, exécuter une fois :
 -- update public.profiles set role = 'admin' where id = 'UUID_DU_PREMIER_ADMIN';
+
+-- Espace médecin : tournées par étage et créneaux externes sans détail patient.
+create table if not exists public.doctor_rounds (
+  id uuid primary key default gen_random_uuid(),
+  doctor_id uuid not null references public.profiles(id) on delete restrict,
+  floor_number smallint not null check (floor_number between 0 and 3),
+  scheduled_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists doctor_rounds_floor_schedule_idx on public.doctor_rounds(floor_number, scheduled_at);
+create index if not exists doctor_rounds_doctor_schedule_idx on public.doctor_rounds(doctor_id, scheduled_at);
+
+create table if not exists public.doctor_schedule_blocks (
+  id uuid primary key default gen_random_uuid(),
+  doctor_id uuid not null references public.profiles(id) on delete cascade,
+  starts_at timestamptz not null,
+  ends_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (ends_at > starts_at)
+);
+create index if not exists doctor_schedule_blocks_doctor_starts_idx on public.doctor_schedule_blocks(doctor_id, starts_at);
+
+drop trigger if exists doctor_rounds_updated_at on public.doctor_rounds;
+create trigger doctor_rounds_updated_at before update on public.doctor_rounds for each row execute function public.set_updated_at();
+drop trigger if exists doctor_schedule_blocks_updated_at on public.doctor_schedule_blocks;
+create trigger doctor_schedule_blocks_updated_at before update on public.doctor_schedule_blocks for each row execute function public.set_updated_at();
+
+create or replace function public.current_patient_room_floor()
+returns smallint
+language sql stable security definer set search_path = public as $$
+  select case when coalesce(room_number, '') ~ '^[0-3]' then left(room_number, 1)::smallint else null end
+  from public.patient_stays
+  where patient_id = auth.uid() and ended_at is null
+  order by started_at desc
+  limit 1
+$$;
+
+alter table public.doctor_rounds enable row level security;
+alter table public.doctor_schedule_blocks enable row level security;
+create policy "patients read their floor rounds" on public.doctor_rounds for select to authenticated using (
+  (public.current_role() = 'patient'::public.app_role and floor_number = public.current_patient_room_floor())
+  or public.is_clinical_or_reception()
+);
+create policy "doctors publish their rounds" on public.doctor_rounds for insert to authenticated with check (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+create policy "doctors update their rounds" on public.doctor_rounds for update to authenticated using (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+) with check (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+create policy "doctors delete their rounds" on public.doctor_rounds for delete to authenticated using (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+create policy "doctor reads private schedule blocks" on public.doctor_schedule_blocks for select to authenticated using (
+  doctor_id = auth.uid() or public.current_role() = 'admin'::public.app_role
+);
+create policy "doctor creates private schedule blocks" on public.doctor_schedule_blocks for insert to authenticated with check (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+create policy "doctor updates private schedule blocks" on public.doctor_schedule_blocks for update to authenticated using (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+) with check (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+create policy "doctor deletes private schedule blocks" on public.doctor_schedule_blocks for delete to authenticated using (
+  public.current_role() = 'doctor'::public.app_role and doctor_id = auth.uid()
+);
+grant select, insert, update, delete on public.doctor_rounds, public.doctor_schedule_blocks to authenticated;

@@ -23,7 +23,7 @@ export default async function PermissionsPage() {
   if (patientFilter) query = query.eq(patientFilter.column, patientFilter.value);
   const { data: permissions } = await query;
   const title = profile.role === "patient" ? "Mes permissions de sortie" : profile.role === "reception" ? "Départs et retours" : "Permissions de sortie";
-  const subtitle = profile.role === "patient" ? "Votre sortie est autorisée uniquement avec l’accord du médecin et du cadre." : profile.role === "reception" ? "Enregistrez l’heure réelle au moment du départ et du retour." : "Consultez et traitez les demandes selon votre périmètre.";
+  const subtitle = profile.role === "patient" ? "Votre sortie est autorisée uniquement avec la validation du médecin et du cadre." : profile.role === "reception" ? "Enregistrez l’heure réelle au moment du départ et du retour." : "Consultez et traitez les demandes selon votre périmètre.";
   return <PortalShell profile={profile}>
     <div className="page-intro"><div><h1>{title}</h1><p>{subtitle}</p></div></div>
     {profile.role === "patient" && <section className="card" style={{ marginBottom: 18 }}><div className="card-header"><div><h2>Nouvelle demande</h2><p className="card-subtitle">Les deux validations sont nécessaires avant tout départ.</p></div></div><div className="card-body"><PermissionForm /></div></section>}

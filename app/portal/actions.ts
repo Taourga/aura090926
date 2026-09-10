@@ -8,7 +8,7 @@ import type { AppRole } from "@/lib/types";
 type ActionResult = { error?: string; success?: string };
 
 function refreshPortal() {
-  ["/portal", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/admin"].forEach((path) => revalidatePath(path));
+  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/admin"].forEach((path) => revalidatePath(path));
 }
 
 export async function submitPermission(input: { departureAt: string; returnAt: string; reason: string }): Promise<ActionResult> {
@@ -39,7 +39,7 @@ export async function decidePermission(permissionId: string, decision: "approved
   });
   if (error) return { error: error.message };
   refreshPortal();
-  return { success: decision === "approved" ? "Accord enregistré." : "Refus enregistré." };
+  return { success: decision === "approved" ? "Validation enregistrée." : "Refus enregistré." };
 }
 
 export async function recordMovement(permissionId: string, action: "depart" | "return"): Promise<ActionResult> {
@@ -92,6 +92,38 @@ export async function createAppointment(input: { patientId: string; title: strin
   if (error) return { error: error.message };
   refreshPortal();
   return { success: "Le rendez-vous a été ajouté au planning du patient." };
+}
+
+export async function scheduleDoctorRound(input: { floorNumber: number; scheduledAt: string }): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "doctor") return { error: "Cette action est réservée au médecin." };
+  if (![0, 1, 2, 3].includes(input.floorNumber) || !input.scheduledAt) return { error: "Choisissez un étage et une heure de passage." };
+  const scheduledAt = new Date(input.scheduledAt);
+  if (Number.isNaN(scheduledAt.getTime()) || scheduledAt <= new Date()) return { error: "L'heure de passage doit être dans le futur." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("doctor_rounds").insert({
+    doctor_id: profile.id,
+    floor_number: input.floorNumber,
+    scheduled_at: scheduledAt.toISOString(),
+  });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: "L'heure de passage est publiée pour les patients de cet étage." };
+}
+
+export async function createExternalAppointment(input: { startsAt: string; endsAt: string }): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "doctor") return { error: "Cette action est réservée au médecin." };
+  if (!input.startsAt || !input.endsAt || new Date(input.endsAt) <= new Date(input.startsAt)) return { error: "Vérifiez les horaires du rendez-vous externe." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("doctor_schedule_blocks").insert({
+    doctor_id: profile.id,
+    starts_at: input.startsAt,
+    ends_at: input.endsAt,
+  });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: "Le créneau externe a été ajouté sans détail patient." };
 }
 
 export async function publishInformation(input: { title: string; body: string; startsAt?: string; endsAt?: string }): Promise<ActionResult> {

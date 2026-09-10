@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MovementActions, PermissionDecisionActions } from "@/components/permission-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { DoctorRoundForm, ExternalAppointmentForm } from "@/components/doctor-schedule-tools";
 import { formatDateTime, formatTime } from "@/lib/format";
 import type { AppRole, PermissionStatus } from "@/lib/types";
 
@@ -36,6 +37,18 @@ export type StaffAppointment = {
   patient: Relation<Person>;
 };
 
+export type DoctorRound = {
+  id: string;
+  floor_number: number;
+  scheduled_at: string;
+};
+
+export type DoctorScheduleBlock = {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+};
+
 export type OperationalRole = Extract<AppRole, "doctor" | "manager" | "nurse" | "reception">;
 
 function one<T>(value: Relation<T>) {
@@ -56,12 +69,18 @@ function EmptyQueue({ children }: { children: React.ReactNode }) {
   return <div className="queue-empty"><span aria-hidden="true">✓</span>{children}</div>;
 }
 
-export function StaffDashboard({ role, firstName, permissions, stays, appointments }: {
+function floorLabel(floor: number) {
+  return floor === 0 ? "RDC" : floor === 1 ? "1er étage" : `${floor}e étage`;
+}
+
+export function StaffDashboard({ role, firstName, permissions, stays, appointments, doctorRounds = [], externalAppointments = [] }: {
   role: OperationalRole;
   firstName: string;
   permissions: StaffPermission[];
   stays: StaffStay[];
   appointments: StaffAppointment[];
+  doctorRounds?: DoctorRound[];
+  externalAppointments?: DoctorScheduleBlock[];
 }) {
   const activeStays = stays || [];
   const presentStays = activeStays.filter((stay) => stay.presence === "present");
@@ -82,14 +101,14 @@ export function StaffDashboard({ role, firstName, permissions, stays, appointmen
   const content = {
     doctor: {
       eyebrow: "Espace médical",
-      title: "Décisions cliniques, sans perdre le fil.",
-      subtitle: "Priorisez les permissions à valider et gardez le planning de vos patients à portée de main.",
-      action: { href: "/portal/appointments", label: "Planifier un rendez-vous" },
+      title: "Tournée et suivi des patients, au même endroit.",
+      subtitle: "Publiez vos passages par étage, sélectionnez un patient et gardez votre planning sous contrôle.",
+      action: { href: "/portal/patients", label: "Choisir un patient" },
       metrics: [
-        [medicalQueue.length, "Avis médical à donner", "Permissions en attente"],
-        [appointments.length, "Rendez-vous à venir", "Planning clinique"],
-        [activeStays.length, "Patients suivis", "Séjours actifs"],
-        [approvedCount, "Permissions autorisées", "À surveiller"],
+        [medicalQueue.length, "Validations en attente", "Permissions à traiter"],
+        [doctorRounds.length, "Passages publiés", "Par étage"],
+        [appointments.length, "Rendez-vous internes", "Planning clinique"],
+        [externalAppointments.length, "RDV externes", "Créneaux réservés"],
       ],
     },
     manager: {
@@ -139,8 +158,10 @@ export function StaffDashboard({ role, firstName, permissions, stays, appointmen
     <div className="staff-metric-grid">{content.metrics.map(([value, title, detail]) => <article className="staff-metric" key={title}><strong>{value}</strong><span>{title}</span><small>{detail}</small></article>)}</div>
 
     {role === "doctor" && <div className="role-work-grid role-work-grid--doctor">
-      <section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">File clinique</p><h2>Demandes requérant votre avis</h2></div><span className="count-pill">{medicalQueue.length}</span></div><div className="work-card-body">{medicalQueue.length ? medicalQueue.map((permission) => <div className="queue-row" key={permission.id}><PatientIdentity patient={permission.patient} detail={permission.reason || "Motif non renseigné"} /><PermissionMeta permission={permission} /><div className="queue-action"><PermissionDecisionActions permissionId={permission.id} /></div></div>) : <EmptyQueue>Aucun avis médical en attente.</EmptyQueue>}</div></section>
-      <section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Aujourd'hui et après</p><h2>Agenda clinique</h2></div><Link href="/portal/appointments" className="text-link">Planning complet</Link></div><div className="work-card-body">{appointments.length ? appointments.map((appointment) => <div className="timeline-row" key={appointment.id}><time>{formatTime(appointment.starts_at)}</time><PatientIdentity patient={appointment.patient} detail={`${appointment.title} · ${appointment.location || "Lieu à confirmer"}`} /></div>) : <EmptyQueue>Aucun rendez-vous à venir.</EmptyQueue>}</div></section>
+      <section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">Permissions</p><h2>Validations en attente</h2></div><span className="count-pill">{medicalQueue.length}</span></div><div className="work-card-body">{medicalQueue.length ? medicalQueue.map((permission) => <div className="queue-row" key={permission.id}><PatientIdentity patient={permission.patient} detail={permission.reason || "Motif non renseigné"} /><PermissionMeta permission={permission} /><div className="queue-action"><PermissionDecisionActions permissionId={permission.id} /></div></div>) : <EmptyQueue>Aucune permission en attente de validation.</EmptyQueue>}</div></section>
+      <section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Planning</p><h2>Rendez-vous à venir</h2></div><Link href="/portal/appointments" className="text-link">Planning complet</Link></div><div className="work-card-body">{appointments.length || externalAppointments.length ? <div>{appointments.map((appointment) => <div className="timeline-row" key={appointment.id}><time>{formatTime(appointment.starts_at)}</time><PatientIdentity patient={appointment.patient} detail={`${appointment.title} · ${appointment.location || "Lieu à confirmer"}`} /></div>)}{externalAppointments.map((appointment) => <div className="timeline-row timeline-row--external" key={appointment.id}><time>{formatDateTime(appointment.starts_at)}</time><div><strong>RDV externe</strong><small>Créneau réservé · aucun détail affiché</small></div></div>)}</div> : <EmptyQueue>Aucun rendez-vous à venir.</EmptyQueue>}</div></section>
+      <section className="work-card role-work-grid--full doctor-round-card"><div className="work-card-head"><div><p className="section-kicker">Tournée par étage</p><h2>Informer les patients de votre passage</h2></div></div><div className="doctor-round-content"><DoctorRoundForm /><div className="doctor-round-list">{doctorRounds.length ? doctorRounds.map((round) => <div className="doctor-round-item" key={round.id}><span>{floorLabel(round.floor_number)}</span><strong>{formatDateTime(round.scheduled_at)}</strong><small>Visible par les patients des chambres {round.floor_number}xx</small></div>) : <div className="queue-empty"><span aria-hidden="true">i</span>Aucun passage publié pour le moment.</div>}</div></div></section>
+      <section className="work-card role-work-grid--full external-slot-card"><div className="work-card-head"><div><p className="section-kicker">Créneau privé</p><h2>Ajouter un RDV externe</h2></div></div><div className="work-card-body"><p className="card-subtitle external-slot-copy">Ce créneau n&apos;affiche ni patient, ni motif, ni détail dans le planning.</p><ExternalAppointmentForm /></div></section>
     </div>}
 
     {role === "manager" && <div className="role-work-grid role-work-grid--manager">

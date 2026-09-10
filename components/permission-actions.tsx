@@ -8,7 +8,7 @@ export function PermissionDecisionActions({ permissionId }: { permissionId: stri
   const [result, setResult] = useState<{ error?: string; success?: string }>({});
   const [loading, setLoading] = useState(false);
   async function decide(decision: "approved" | "refused") { setLoading(true); setResult(await decidePermission(permissionId, decision)); setLoading(false); }
-  return <div><ActionFeedback message={result.success} error={result.error} /><div className="inline-actions"><button className="button button-primary button-small" disabled={loading} onClick={() => decide("approved")}>Accorder</button><button className="button button-danger button-small" disabled={loading} onClick={() => decide("refused")}>Refuser</button></div></div>;
+  return <div><ActionFeedback message={result.success} error={result.error} /><div className="inline-actions"><button className="button button-primary button-small" disabled={loading} onClick={() => decide("approved")}>Valider</button><button className="button button-danger button-small" disabled={loading} onClick={() => decide("refused")}>Refuser</button></div></div>;
 }
 
 export function MovementActions({ permissionId, action }: { permissionId: string; action: "depart" | "return" }) {

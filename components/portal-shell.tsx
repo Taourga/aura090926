@@ -6,21 +6,22 @@ import type { Profile } from "@/lib/types";
 import { roleLabels } from "@/lib/types";
 import { LogoutButton } from "@/components/logout-button";
 
-type NavItem = { href: string; label: string; roles?: Profile["role"][] };
+type NavItem = { href: string; label: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
 
 const navItems: NavItem[] = [
   { href: "/portal", label: "Vue d'ensemble" },
+  { href: "/portal/patients", label: "Patients", roles: ["doctor"] },
   { href: "/portal/permissions", label: "Permissions" },
-  { href: "/portal/activities", label: "Activités" },
+  { href: "/portal/activities", label: "Activités", hiddenFor: ["doctor"] },
   { href: "/portal/appointments", label: "Planning", roles: ["doctor", "manager", "psychologist", "nurse", "provider"] },
-  { href: "/portal/information", label: "Informations" },
+  { href: "/portal/information", label: "Informations", hiddenFor: ["doctor"] },
   { href: "/portal/admin", label: "Administration", roles: ["admin"] },
 ];
 
 function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: boolean }) {
   const pathname = usePathname();
   return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
-    {navItems.filter((item) => !item.roles || item.roles.includes(profile.role)).map((item) => (
+    {navItems.filter((item) => (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => (
       <Link key={item.href} href={item.href} className={pathname === item.href ? "active" : ""}>{item.label}</Link>
     ))}
   </nav>;

@@ -40,7 +40,7 @@ export const roleLabels: Record<AppRole, string> = {
 
 export const permissionLabels: Record<PermissionStatus, string> = {
   submitted: "Soumise",
-  waiting: "En attente d'avis",
+  waiting: "En attente de validation",
   approved: "Autorisée",
   refused: "Refusée",
   cancelled: "Annulée",
