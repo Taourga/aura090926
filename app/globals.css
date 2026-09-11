@@ -31,6 +31,11 @@ button { cursor: pointer; }
 .button-secondary { background: white; color: var(--navy); border-color: var(--line); }
 .button-secondary:hover { background: #f6fbfb; border-color: #b4cbd3; }
 .button-danger { background: #fff0ef; color: var(--danger); border-color: #f5c7c3; }
+.attendance-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.attendance-list { margin: -2px 0 10px 100px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbfb; }
+.attendance-list > strong { display: block; margin: 0 0 8px; color: var(--ink); font-size: .85rem; }
+.form-help { margin: 10px 0 14px; color: var(--muted); font-size: .88rem; }
+.field-optional { color: var(--muted); font-weight: 400; }
 .button-small { min-height: 34px; padding: 6px 10px; font-size: .88rem; }
 .hero { width: min(1160px, calc(100% - 40px)); margin: 42px auto 0; display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: center; padding: 42px 0 72px; }
 .eyebrow { color: var(--teal-deep); font-size: .86rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }

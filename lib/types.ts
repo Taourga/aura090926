@@ -19,6 +19,10 @@ export type PermissionStatus =
   | "departed"
   | "returned";
 
+export type AttendanceStatus = "scheduled" | "present" | "absent";
+
+export type VisitStatus = "scheduled" | "arrived" | "departed" | "cancelled";
+
 export type Profile = {
   id: string;
   full_name: string;
@@ -49,4 +53,17 @@ export const permissionLabels: Record<PermissionStatus, string> = {
   cancelled: "Annulée",
   departed: "Patient sorti",
   returned: "Retour enregistré",
+};
+
+export const attendanceLabels: Record<AttendanceStatus, string> = {
+  scheduled: "Prévu",
+  present: "Présent",
+  absent: "Absence signalée",
+};
+
+export const visitLabels: Record<VisitStatus, string> = {
+  scheduled: "Prévue",
+  arrived: "Visiteur arrivé",
+  departed: "Visite terminée",
+  cancelled: "Annulée",
 };

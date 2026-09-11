@@ -2,13 +2,17 @@
 
 Portail de séjour pour les patients et les équipes d'une clinique. Le projet fournit une application Next.js prête pour Vercel et un schéma Supabase avec authentification, règles d'accès par rôle, journalisation et flux de permissions à double validation.
 
-## Ce que couvre cette première version
+## Ce que couvre la V1.1
 
 - Connexion par e-mail et mot de passe via Supabase Auth.
 - Espaces pour patient, médecin, cadre, accueil, psychologue, infirmier, gouvernance, intervenant et administrateur.
 - Demande de permission de sortie avec accord obligatoire du médecin **et** du cadre.
 - Enregistrement horodaté du départ et du retour par l'accueil.
 - Planning de rendez-vous, activités avec capacité et inscription, menus et informations de séjour.
+- Validation de présence/absence par l'intervenant ayant créé le rendez-vous et par les rôles habilités pour les activités.
+- Demandes de permission bloquées lorsque le départ est à moins de 48 heures.
+- Déclaration de visite par le patient (deux visiteurs maximum, une heure, entre 13 h et 17 h) et contrôle horodaté des entrées/départs par l'accueil.
+- Repères pratiques de séjour : repas, jardin, patio, ascenseurs et rappels de prise de médicaments.
 - Administration des rôles et de l'activation des comptes.
 - RLS Supabase et journal d'audit des actions sensibles.
 
@@ -22,7 +26,7 @@ Portail de séjour pour les patients et les équipes d'une clinique. Le projet f
 
 2. Créer un projet Supabase, puis copier `.env.example` dans `.env.local` et renseigner les deux valeurs du tableau **Connect** de Supabase. Ne jamais utiliser la clé `service_role` dans ce fichier.
 
-3. Dans Supabase, ouvrir **SQL Editor** et exécuter d'abord `supabase/schema.sql`, puis `supabase/seed.sql` si vous souhaitez les activités et menus de démonstration.
+3. Dans Supabase, ouvrir **SQL Editor** et exécuter d'abord `supabase/schema.sql`, puis les fichiers de `supabase/migrations/` dans l'ordre chronologique. Exécuter enfin `supabase/seed.sql` si vous souhaitez les activités et menus de démonstration.
 
 4. Dans **Authentication > Providers**, activer l'authentification par e-mail. Créer les comptes de test dans **Authentication > Users** : le trigger crée automatiquement leur profil avec le rôle `patient`.
 

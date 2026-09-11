@@ -4,6 +4,7 @@ import type { AppRole, Profile } from "@/lib/types";
 
 export const careRoles: AppRole[] = ["doctor", "manager", "psychologist", "nurse", "provider"];
 export const appointmentRoles: AppRole[] = ["doctor", "manager", "psychologist", "provider"];
+export const attendanceRoles: AppRole[] = ["doctor", "manager", "psychologist", "provider", "governance", "coach", "admin"];
 
 export async function requireProfile(): Promise<Profile> {
   const supabase = await createClient();

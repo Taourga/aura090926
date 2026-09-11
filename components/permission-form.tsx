@@ -14,13 +14,15 @@ export function PermissionForm() {
     setResult(response); setLoading(false);
     if (response.success) event.currentTarget.reset();
   }
+  const minDeparture = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16);
   return <form onSubmit={onSubmit}>
     <ActionFeedback message={result.success} error={result.error} />
     <div className="form-grid">
-      <label className="field">Début de la permission<input name="departureAt" type="datetime-local" required /></label>
+      <label className="field">Début de la permission<input name="departureAt" type="datetime-local" min={minDeparture} required /></label>
       <label className="field">Fin de la permission<input name="returnAt" type="datetime-local" required /></label>
       <label className="field wide">Motif ou commentaire (facultatif)<textarea name="reason" placeholder="Ex. rendez-vous familial" /></label>
     </div>
+    <p className="form-help">Une demande doit être envoyée au moins 48 heures avant le début souhaité de la permission.</p>
     <button className="button button-primary" disabled={loading}>{loading ? "Envoi..." : "Envoyer ma demande"}</button>
   </form>;
 }

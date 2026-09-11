@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { sendPatientUpdateEmails, type NotificationRecipient } from "@/lib/patient-notifications";
-import type { AppRole } from "@/lib/types";
+import type { AppRole, AttendanceStatus } from "@/lib/types";
 
 type ActionResult = { error?: string; success?: string };
 
 function refreshPortal() {
-  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
+  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/visits", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
 }
 
 async function notifyPatients(supabase: Awaited<ReturnType<typeof createClient>>, subject: string, patientId?: string) {
@@ -22,6 +22,9 @@ export async function submitPermission(input: { departureAt: string; returnAt: s
   if (profile.role !== "patient") return { error: "Cette action est réservée aux patients." };
   if (!input.departureAt || !input.returnAt || new Date(input.returnAt) <= new Date(input.departureAt)) {
     return { error: "Le retour doit être postérieur au départ." };
+  }
+  if (new Date(input.departureAt).getTime() < Date.now() + 48 * 60 * 60 * 1000) {
+    return { error: "La demande est bloquée : une permission doit être demandée au moins 48 heures avant le départ souhaité." };
   }
   const supabase = await createClient();
   const { error } = await supabase.rpc("submit_permission_request", {
@@ -116,6 +119,53 @@ export async function createActivity(input: { title: string; description: string
   await notifyPatients(supabase, "Une nouvelle activité est disponible dans AURA.");
   refreshPortal();
   return { success: "L’activité est publiée." };
+}
+
+export async function markAppointmentAttendance(appointmentId: string, status: AttendanceStatus): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (!["present", "absent"].includes(status)) return { error: "Statut de présence invalide." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_appointment_attendance", { p_appointment_id: appointmentId, p_status: status });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: status === "present" ? "Présence enregistrée." : "Absence enregistrée." };
+}
+
+export async function markActivityAttendance(enrollmentId: string, status: AttendanceStatus): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (!["doctor", "manager", "psychologist", "provider", "governance", "coach", "admin"].includes(profile.role)) return { error: "Vous n’êtes pas autorisé à enregistrer une présence." };
+  if (!["present", "absent"].includes(status)) return { error: "Statut de présence invalide." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_activity_attendance", { p_enrollment_id: enrollmentId, p_status: status });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: status === "present" ? "Présence enregistrée." : "Absence enregistrée." };
+}
+
+export async function submitVisit(input: { startsAt: string; endsAt: string; visitorOneName: string; visitorTwoName: string }): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "patient") return { error: "Seul le patient peut prévenir l’accueil d’une visite." };
+  if (!input.startsAt || !input.endsAt || !input.visitorOneName.trim()) return { error: "Indiquez au moins un visiteur ainsi que le créneau souhaité." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("submit_visit_notification", {
+    p_starts_at: input.startsAt,
+    p_ends_at: input.endsAt,
+    p_visitor_one_name: input.visitorOneName.trim(),
+    p_visitor_two_name: input.visitorTwoName.trim() || null,
+  });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: "Votre visite a été transmise à l’accueil." };
+}
+
+export async function recordVisitMovement(visitId: string, action: "arrive" | "depart"): Promise<ActionResult> {
+  const profile = await requireProfile();
+  if (profile.role !== "reception") return { error: "Cette action est réservée à l’accueil." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("record_visit_movement", { p_visit_id: visitId, p_action: action });
+  if (error) return { error: error.message };
+  refreshPortal();
+  return { success: action === "arrive" ? "Entrée du visiteur enregistrée." : "Départ du visiteur enregistré." };
 }
 
 export async function scheduleDoctorRound(input: { floorNumber: number; scheduledAt: string }): Promise<ActionResult> {
