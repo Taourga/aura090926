@@ -9,7 +9,7 @@ import type { AppRole, AttendanceStatus } from "@/lib/types";
 type ActionResult = { error?: string; success?: string };
 
 function refreshPortal() {
-  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/visits", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
+  ["/portal", "/portal/patients", "/portal/permissions", "/portal/activities", "/portal/appointments", "/portal/messages", "/portal/visits", "/portal/information", "/portal/menus", "/portal/sport-room", "/portal/admin"].forEach((path) => revalidatePath(path));
 }
 
 async function notifyPatients(supabase: Awaited<ReturnType<typeof createClient>>, subject: string, patientId?: string) {
@@ -89,14 +89,9 @@ export async function createAppointment(input: { patientId: string; title: strin
   if (!(["doctor", "manager", "psychologist", "provider"] as AppRole[]).includes(profile.role)) return { error: "Vous n’êtes pas autorisé à créer un rendez-vous." };
   if (!input.patientId || !input.title.trim() || !input.startsAt || !input.endsAt || new Date(input.endsAt) <= new Date(input.startsAt)) return { error: "Vérifiez le patient, l’intitulé et les horaires." };
   const supabase = await createClient();
-  const { error } = await supabase.from("appointments").insert({
-    patient_id: input.patientId,
-    creator_id: profile.id,
-    title: input.title.trim(),
-    starts_at: input.startsAt,
-    ends_at: input.endsAt,
-    location: input.location.trim() || null,
-    notes: input.notes.trim() || null,
+  const { error } = await supabase.rpc("create_appointment_checked", {
+    p_patient_id: input.patientId, p_title: input.title.trim(), p_starts_at: input.startsAt, p_ends_at: input.endsAt,
+    p_location: input.location.trim() || null, p_notes: input.notes.trim() || null,
   });
   if (error) return { error: error.message };
   await notifyPatients(supabase, "Votre planning AURA a été mis à jour.", input.patientId);

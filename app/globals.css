@@ -355,4 +355,22 @@ h3 { margin: 0; font-size: 1rem; }
 .cleaning-meals > div { display:flex; flex-direction:column; gap:6px; }
 .cleaning-meals strong { font-size:36px; }
 .cleaning-section-title { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:24px; }
+.messenger { min-height:620px; display:grid; grid-template-columns:280px minmax(0,1fr); overflow:hidden; }
+.messenger-contacts { border-right:1px solid var(--line); background:#f8fbfb; }
+.messenger-title { display:flex; justify-content:space-between; padding:18px; border-bottom:1px solid var(--line); }
+.messenger-contact { width:100%; padding:12px 15px; border:0; border-bottom:1px solid var(--line); background:transparent; display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:10px; align-items:center; text-align:left; cursor:pointer; color:var(--ink); }
+.messenger-contact:hover,.messenger-contact.active { background:var(--mint); }
+.messenger-contact > span:nth-child(2) { display:grid; gap:2px; min-width:0; }
+.messenger-contact small { color:var(--muted); }
+.messenger-contact b { min-width:23px; height:23px; display:grid; place-items:center; border-radius:999px; background:var(--teal); color:white; font-size:.75rem; }
+.messenger-thread { min-width:0; display:grid; grid-template-rows:1fr auto; }
+.message-list { padding:22px; display:flex; flex-direction:column; gap:10px; overflow:auto; max-height:520px; background:#fff; }
+.message-bubble { max-width:72%; align-self:flex-start; padding:11px 13px; border-radius:4px 15px 15px 15px; background:#edf3f5; }
+.message-bubble.own { align-self:flex-end; border-radius:15px 4px 15px 15px; background:var(--mint); }
+.message-bubble p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.message-bubble time { display:block; margin-top:5px; color:var(--muted); font-size:.7rem; text-align:right; }
+.message-form { padding:14px 18px; border-top:1px solid var(--line); background:#f8fbfb; }
+.message-form .field { margin-bottom:10px; }
+.message-form textarea { resize:vertical; }
 @media(max-width:800px) { .cleaning-zone-grid { grid-template-columns:1fr; } .cleaning-meals { grid-template-columns:1fr; } .cleaning-task { align-items:flex-start; } .cleaning-task button { white-space:normal; } }
+@media(max-width:700px) { .messenger { grid-template-columns:1fr; } .messenger-contacts { border-right:0; border-bottom:1px solid var(--line); max-height:220px; overflow:auto; } .message-list { min-height:360px; } .message-bubble { max-width:88%; } }
