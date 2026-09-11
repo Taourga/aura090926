@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
   const profile = await requireProfile();
+  if (profile.role === "governance" || profile.role === "technical") redirect("/portal/housekeeping");
   const supabase = await createClient();
 
   if (profile.role === "patient") {

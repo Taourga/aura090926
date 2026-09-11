@@ -6,3 +6,5 @@ node_modules
 .env*.local
 !.env.example
 *.tsbuildinfo
+.qa-runtime/
+demo-accounts.local.json

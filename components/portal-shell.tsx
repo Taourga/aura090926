@@ -10,9 +10,11 @@ type NavItem = { href: string; label: string; roles?: Profile["role"][]; hiddenF
 
 const navItems: NavItem[] = [
   { href: "/portal", label: "Vue d'ensemble" },
+  { href: "/portal/housekeeping", label: "Hôtellerie & ménage", roles: ["governance", "technical", "admin"] },
+  { href: "/portal/stays", label: "Entrées & sorties", roles: ["reception", "nurse", "admin"] },
   { href: "/portal/patients", label: "Patients", roles: ["doctor"] },
-  { href: "/portal/permissions", label: "Permissions" },
-  { href: "/portal/activities", label: "Activités", hiddenFor: ["doctor"] },
+  { href: "/portal/permissions", label: "Permissions", hiddenFor: ["technical", "governance"] },
+  { href: "/portal/activities", label: "Activités", hiddenFor: ["doctor", "technical"] },
   { href: "/portal/appointments", label: "Planning", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
   { href: "/portal/visits", label: "Visites", roles: ["patient", "reception"] },
   { href: "/portal/menus", label: "Menus", hiddenFor: ["doctor"] },

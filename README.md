@@ -18,6 +18,23 @@ Portail de séjour pour les patients et les équipes d'une clinique. Le projet f
 
 ## Démarrage local
 
+### Module hôtellerie V1.2
+
+- Gouvernance : occupation des 100 chambres, premières entrées et sorties définitives prévues, affectations, progression et historique du ménage, repas prévus à 8 h, 12 h et 19 h (Europe/Paris).
+- Personnel technique : uniquement les tâches de ses zones, avec validation horodatée par le serveur et identité de l’agent conservée.
+- Deux agents par étage (RDC et étages 1 à 3), un par ascenseur (trois ascenseurs). Les postes d’ascenseur peuvent être cumulés avec un étage. Les toilettes de l’étage sont à la charge de son binôme.
+- Chambres 001–010, 101–130, 201–230, 301–330 : ménage quotidien. Le jour du retour d’une permission autorisée d’au moins 24 h, le ménage est dispensé, sauf entrée ou sortie définitive ce jour-là. Les dates réelles priment lorsqu’elles sont renseignées.
+- Ascenseurs et toilettes : matin, midi et soir. Les passages de midi et du soir peuvent être pointés à partir de 12 h et 18 h. Les pointages passés ne sont pas modifiables.
+- L’accueil gère les premières entrées dans **Entrées & sorties** ; l’infirmier y prévoit les sorties définitives et confirme la clôture réelle du séjour.
+- Les affectations sont reconduites jusqu’à leur prochaine modification. Les tâches du jour sont créées à la première consultation ; l’historique conserve les journées et pointages enregistrés, sans inventer des interventions passées.
+- « Disponible » signifie sans séjour en cours : vérifier la propreté avant une admission. Une permission temporaire ne libère pas la chambre. Les repas sont des prévisions de présence, sans prise en compte des régimes alimentaires.
+
+Appliquer séparément `20260911_v12_01_technical_role.sql`, puis `20260911_v12_02_housekeeping.sql` (la première transaction doit être validée avant d’utiliser la nouvelle valeur d’enum).
+
+Pour recréer la démonstration sur une autre base, le script `scripts/seed-housekeeping-demo.mjs` crée dix agents fictifs et une gouvernante. Il utilise `SUPABASE_SERVICE_ROLE_KEY` fournie dans l’environnement du terminal, jamais dans le navigateur ni dans Git. Exécuter `node --env-file=.env.local scripts/seed-housekeeping-demo.mjs`. Les mots de passe individuels sont écrits dans `demo-accounts.local.json`, exclu de Git. Les comptes existants et les affectations existantes sont préservés. Aucun e-mail n’est envoyé.
+
+Validation du module dans une base PostgreSQL éphémère : `npm install --prefix .qa-runtime --no-save --package-lock=false @electric-sql/pglite`, puis `node scripts/test-housekeeping.mjs`. Le test ne se connecte pas à Supabase.
+
 1. Installer Node.js 20 ou plus récent, puis installer les dépendances :
 
    ```bash

@@ -331,3 +331,28 @@ h3 { margin: 0; font-size: 1rem; }
   .timeline-row--external { grid-template-columns:1fr; }
   .sport-day { grid-template-columns:1fr; gap:8px; }
 }
+/* Gouvernance hôtelière et feuille de ménage mobile. */
+.cleaning-date,.cleaning-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.cleaning-date label,.cleaning-date input { display:block; }
+.cleaning-zone-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.cleaning-zone-grid .card { margin:0; align-self:start; }
+.cleaning-task { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid #e4e9e7; }
+.cleaning-task strong,.cleaning-task .row-meta,.cleaning-done small { display:block; }
+.cleaning-done { color:#24624e; font-size:13px; text-align:right; display:block; }
+.cleaning-done small { color:#64736c; margin-top:3px; }
+.cleaning-zone-grid progress { width:100%; height:8px; accent-color:#307963; }
+.cleaning-assignment-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin:16px 0; }
+.cleaning-assignment-grid fieldset { border:1px solid #dde5e0; border-radius:12px; padding:14px; min-width:0; }
+.cleaning-assignment-grid label,.cleaning-assignment-grid select { display:block; width:100%; margin:6px 0; }
+.housekeeping-roster { margin:18px 0; }
+.housekeeping-roster summary { padding:20px; cursor:pointer; font-weight:650; }
+.cleaning-room-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:10px; margin:12px 0 24px; }
+.cleaning-room { padding:14px; border-radius:10px; border:1px solid #c9ded4; background:#f4faf6; display:flex; flex-direction:column; gap:5px; }
+.cleaning-room.occupied { background:#f2f5fa; border-color:#d5dfea; }
+.cleaning-room strong { font-size:20px; }
+.cleaning-room small { color:#53655e; }
+.cleaning-meals { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.cleaning-meals > div { display:flex; flex-direction:column; gap:6px; }
+.cleaning-meals strong { font-size:36px; }
+.cleaning-section-title { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:24px; }
+@media(max-width:800px) { .cleaning-zone-grid { grid-template-columns:1fr; } .cleaning-meals { grid-template-columns:1fr; } .cleaning-task { align-items:flex-start; } .cleaning-task button { white-space:normal; } }
