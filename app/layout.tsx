@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./aura-polish.css";
 
 export const metadata: Metadata = {
-  title: "AURA | Portail de séjour",
-  description: "Portail sécurisé pour patients et équipes de clinique.",
+  title: "AURA | Orchestration du séjour patient",
+  description: "AURA relie patients, soignants, accueil et équipes opérationnelles pour simplifier et piloter le séjour en clinique.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
