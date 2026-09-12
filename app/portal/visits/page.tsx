@@ -18,6 +18,7 @@ export default async function VisitsPage() {
   const maxDurationMinutes = facilitySettingNumber(profile, "visits.max_duration_minutes", 60);
   const maxVisitors = facilitySettingNumber(profile, "visits.max_visitors", 2);
   const maxPerDay = facilitySettingNumber(profile, "visits.max_per_day", 1);
+  const displayDateTime = (value: string | null | undefined) => formatDateTime(value, profile.facility.locale, profile.facility.timezone);
   const query = supabase.from("visit_notifications").select("id, patient_id, scheduled_start, scheduled_end, visitor_one_name, visitor_two_name, status, arrived_at, departed_at, patient:profiles!visit_notifications_patient_id_fkey(full_name)").order("scheduled_start", { ascending: false }).limit(100);
   const { data: visits } = profile.role === "patient" ? await query.eq("patient_id", profile.id) : await query;
   const title = profile.role === "patient" ? "Mes visites" : "Visiteurs attendus";
@@ -27,7 +28,7 @@ export default async function VisitsPage() {
     const patient = Array.isArray(visit.patient) ? visit.patient[0] : visit.patient;
     const visitors = [visit.visitor_one_name, visit.visitor_two_name].filter(Boolean).join(" · ");
     const action = profile.role === "reception" && (visit.status === "scheduled" || visit.status === "arrived") ? (visit.status === "scheduled" ? "arrive" : "depart") : null;
-    return <div className="list-row" key={visit.id}><div className="time">{formatDateTime(visit.scheduled_start)}</div><div><div className="row-title">{profile.role === "reception" ? patient?.full_name || "Patient" : "Visite prévue"}</div><div className="row-meta">{visitors} · jusqu&apos;au {formatDateTime(visit.scheduled_end)}</div></div><span className="badge badge-info">{visitLabels[visit.status as VisitStatus]}</span>{action && <VisitMovementActions visitId={visit.id} action={action} />}</div>;
+    return <div className="list-row" key={visit.id}><div className="time">{displayDateTime(visit.scheduled_start)}</div><div><div className="row-title">{profile.role === "reception" ? patient?.full_name || "Patient" : "Visite prévue"}</div><div className="row-meta">{visitors} · jusqu&apos;au {displayDateTime(visit.scheduled_end)}</div></div><span className="badge badge-info">{visitLabels[visit.status as VisitStatus]}</span>{action && <VisitMovementActions visitId={visit.id} action={action} />}</div>;
   };
   return <PortalShell profile={profile}>
     <div className="page-intro"><div><h1>{title}</h1><p>{profile.role === "patient" ? "Prévenez l’accueil directement depuis votre agenda." : "Enregistrez les entrées et départs réels des visiteurs."}</p></div></div>
