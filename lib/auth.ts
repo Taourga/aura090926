@@ -11,14 +11,19 @@ export async function requireProfile(): Promise<Profile> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, active, phone")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: facilityRole }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, active, phone")
+      .eq("id", user.id)
+      .single(),
+    supabase.rpc("current_role"),
+  ]);
 
-  if (!profile || !profile.active) redirect("/login?error=access");
-  if (profile.role !== "patient") return profile as Profile;
+  if (!profile || !profile.active || !facilityRole) redirect("/login?error=access");
+
+  const scopedProfile = { ...profile, role: facilityRole as AppRole } as Profile;
+  if (scopedProfile.role !== "patient") return scopedProfile;
 
   const { data: activeStay } = await supabase
     .from("patient_stays")
@@ -27,7 +32,7 @@ export async function requireProfile(): Promise<Profile> {
     .is("ended_at", null)
     .maybeSingle();
 
-  return { ...profile, activeStay } as Profile;
+  return { ...scopedProfile, activeStay } as Profile;
 }
 
 export function canManagePermissions(role: AppRole) {
