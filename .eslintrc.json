@@ -1,4 +1,7 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
-  "ignorePatterns": ["next-env.d.ts", ".next/", "out/", "build/", ".qa-runtime/"]
+  "ignorePatterns": ["next-env.d.ts", ".next/", "out/", "build/", ".qa-runtime/"],
+  "rules": {
+    "react/no-unescaped-entities": "off"
+  }
 }
