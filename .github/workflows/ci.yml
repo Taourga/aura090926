@@ -42,3 +42,25 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Smoke test public routes
+        shell: bash
+        run: |
+          pnpm start > /tmp/aura-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /tmp/aura-health.json; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/aura-next.log
+            exit 1
+          fi
+          curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null
+          curl --fail --silent --show-error http://127.0.0.1:3000/login > /dev/null
+          cat /tmp/aura-health.json
