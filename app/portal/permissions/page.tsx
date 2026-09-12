@@ -19,6 +19,7 @@ export default async function PermissionsPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
   const minNoticeHours = facilitySettingNumber(profile, "permissions.min_notice_hours", 48);
+  const displayDateTime = (value: string | null | undefined) => formatDateTime(value, profile.facility.locale, profile.facility.timezone);
   const patientFilter = profile.role === "patient" ? { column: "patient_id", value: profile.id } : null;
   let query = supabase.from("permission_requests").select("id, patient_id, departure_at, return_at, reason, status, doctor_decision, manager_decision, departed_at, returned_at, patient:profiles!permission_requests_patient_id_fkey(full_name)").order("departure_at", { ascending: false }).limit(50);
   if (patientFilter) query = query.eq(patientFilter.column, patientFilter.value);
@@ -32,7 +33,7 @@ export default async function PermissionsPage() {
       const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient;
       const canReview = (profile.role === "doctor" && !item.doctor_decision) || (profile.role === "manager" && !item.manager_decision);
       const receptionAction = profile.role === "reception" && (item.status === "approved" || item.status === "departed") ? (item.status === "approved" ? "depart" : "return") : null;
-      return <tr key={item.id}>{profile.role !== "patient" && <td><strong>{patient?.full_name || "Patient"}</strong></td>}<td>{formatDateTime(item.departure_at)}</td><td>{formatDateTime(item.return_at)}</td><td><StatusBadge status={item.status as PermissionStatus} /></td>{profile.role !== "patient" && <><td><DecisionText value={item.doctor_decision} /></td><td><DecisionText value={item.manager_decision} /></td></>}<td>{canReview ? <PermissionDecisionActions permissionId={item.id} /> : receptionAction ? <MovementActions permissionId={item.id} action={receptionAction} /> : <span className="row-meta">{item.returned_at ? "Clôturée" : item.departed_at ? "Patient sorti" : "Aucune action"}</span>}</td></tr>;
+      return <tr key={item.id}>{profile.role !== "patient" && <td><strong>{patient?.full_name || "Patient"}</strong></td>}<td>{displayDateTime(item.departure_at)}</td><td>{displayDateTime(item.return_at)}</td><td><StatusBadge status={item.status as PermissionStatus} /></td>{profile.role !== "patient" && <><td><DecisionText value={item.doctor_decision} /></td><td><DecisionText value={item.manager_decision} /></td></>}<td>{canReview ? <PermissionDecisionActions permissionId={item.id} /> : receptionAction ? <MovementActions permissionId={item.id} action={receptionAction} /> : <span className="row-meta">{item.returned_at ? "Clôturée" : item.departed_at ? "Patient sorti" : "Aucune action"}</span>}</td></tr>;
     }) : <tr><td colSpan={profile.role === "patient" ? 4 : 7} className="empty">Aucune permission à afficher.</td></tr>}</tbody></table></div></section>
   </PortalShell>;
 }
