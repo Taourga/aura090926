@@ -21,6 +21,8 @@ export default async function PortalPage() {
   const profile = await requireProfile();
   if ((profile.role === "governance" || profile.role === "technical") && facilityFeatureEnabled(profile, "housekeeping")) redirect("/portal/housekeeping");
   const supabase = await createClient();
+  const displayDateTime = (value: string | null | undefined) => formatDateTime(value, profile.facility.locale, profile.facility.timezone);
+  const displayTime = (value: string | null | undefined) => formatTime(value, profile.facility.locale, profile.facility.timezone);
 
   if (profile.role === "patient") {
     const showPermissions = facilityFeatureEnabled(profile, "permissions");
@@ -49,14 +51,14 @@ export default async function PortalPage() {
     return <PortalShell profile={profile}>
       <div className="page-intro"><div><h1>Bonjour, {profile.full_name.split(" ")[0]}</h1><p>Vos informations essentielles à {profile.facility.name}, en un coup d’œil.</p></div>{showPermissions && <Link className="button button-primary" href="/portal/permissions">Demander une permission</Link>}</div>
       <section className="summary-link-grid" aria-label="Raccourcis de séjour">
-        <Link href="/portal/appointments" className="summary-link"><span>Rendez-vous</span><strong>{nextAppointment ? formatTime(nextAppointment.starts_at) : "Aucun"}</strong><small>{nextAppointment ? nextAppointment.title : "Voir mon planning"}</small></Link>
+        <Link href="/portal/appointments" className="summary-link"><span>Rendez-vous</span><strong>{nextAppointment ? displayTime(nextAppointment.starts_at) : "Aucun"}</strong><small>{nextAppointment ? nextAppointment.title : "Voir mon planning"}</small></Link>
         {showActivities && <Link href="/portal/activities" className="summary-link"><span>Activités</span><strong>{nextActivity ? "À venir" : "Aucune"}</strong><small>{nextActivity ? nextActivity.title : "Voir les ateliers"}</small></Link>}
-        {showPermissions && <Link href="/portal/permissions" className="summary-link"><span>Permissions</span><strong>{nextPermission ? permissionLabels[nextPermission.status as keyof typeof permissionLabels] : "Aucune"}</strong><small>{nextPermission ? `Prévue ${formatDateTime(nextPermission.departure_at)}` : "Faire une demande"}</small></Link>}
+        {showPermissions && <Link href="/portal/permissions" className="summary-link"><span>Permissions</span><strong>{nextPermission ? permissionLabels[nextPermission.status as keyof typeof permissionLabels] : "Aucune"}</strong><small>{nextPermission ? `Prévue ${displayDateTime(nextPermission.departure_at)}` : "Faire une demande"}</small></Link>}
         {showSport && <Link href="/portal/sport-room" className="summary-link"><span>Salle de sport</span><strong>Disponible</strong><small>Voir le planning de l’établissement</small></Link>}
-        {showVisits && <Link href="/portal/visits" className="summary-link"><span>Visites</span><strong>{nextVisit ? formatTime(nextVisit.scheduled_start) : "Aucune"}</strong><small>{nextVisit ? `Avec ${nextVisit.visitor_one_name}` : "Prévenir l’accueil"}</small></Link>}
+        {showVisits && <Link href="/portal/visits" className="summary-link"><span>Visites</span><strong>{nextVisit ? displayTime(nextVisit.scheduled_start) : "Aucune"}</strong><small>{nextVisit ? `Avec ${nextVisit.visitor_one_name}` : "Prévenir l’accueil"}</small></Link>}
         {showInformation && <Link href="/portal/information" className="summary-link"><span>Informations</span><strong>{informationCount || 0}</strong><small>Voir les informations de séjour</small></Link>}
       </section>
-      {doctorRound && <Link className="overview-note" href="/portal/appointments"><strong>Passage du médecin</strong><span>Prévu le {formatDateTime(doctorRound.scheduled_at)} dans votre étage.</span></Link>}
+      {doctorRound && <Link className="overview-note" href="/portal/appointments"><strong>Passage du médecin</strong><span>Prévu le {displayDateTime(doctorRound.scheduled_at)} dans votre étage.</span></Link>}
     </PortalShell>;
   }
 
@@ -92,6 +94,6 @@ export default async function PortalPage() {
   return <PortalShell profile={profile}>
     <div className="page-intro"><div><h1>Bonjour, {firstName}</h1><p>Vue opérationnelle · {roleLabels[profile.role]} · {profile.facility.name}</p></div><Link className="button button-primary" href={profile.role === "admin" ? "/portal/admin" : "/portal/permissions"}>{profile.role === "admin" ? "Gérer l’établissement" : "Voir les permissions"}</Link></div>
     <div className="metric-grid"><div className="metric"><span>Décisions à traiter</span><strong>{pendingCount || 0}</strong><div className="metric-detail">Permissions en attente</div></div><div className="metric"><span>Permissions autorisées</span><strong>{approvedCount || 0}</strong><div className="metric-detail">À venir ou à enregistrer</div></div><div className="metric"><span>Patients absents</span><strong>{departedCount || 0}</strong><div className="metric-detail">Retour non enregistré</div></div><div className="metric"><span>Rendez-vous à venir</span><strong>{upcomingAppointments?.length || 0}</strong><div className="metric-detail">Prochains créneaux</div></div></div>
-    <section className="card"><div className="card-header"><div><h2>Prochains rendez-vous</h2><p className="card-subtitle">Planning à venir des patients</p></div></div><div className="card-body"><div className="list">{upcomingAppointments?.length ? upcomingAppointments.map((item) => { const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient; return <div className="list-row" key={item.id}><div className="time">{formatTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{patient?.full_name || "Patient"} · {item.location || "Lieu à confirmer"}</div></div><span className="badge badge-info">Prévu</span></div>; }) : <p className="empty">Aucun rendez-vous à venir.</p>}</div></div></section>
+    <section className="card"><div className="card-header"><div><h2>Prochains rendez-vous</h2><p className="card-subtitle">Planning à venir des patients</p></div></div><div className="card-body"><div className="list">{upcomingAppointments?.length ? upcomingAppointments.map((item) => { const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient; return <div className="list-row" key={item.id}><div className="time">{displayTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{patient?.full_name || "Patient"} · {item.location || "Lieu à confirmer"}</div></div><span className="badge badge-info">Prévu</span></div>; }) : <p className="empty">Aucun rendez-vous à venir.</p>}</div></div></section>
   </PortalShell>;
 }
