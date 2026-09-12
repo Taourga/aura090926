@@ -12,17 +12,21 @@ export type HousekeepingData = {
 export const floorLabel = (floor: number) => floor === 0 ? "Rez-de-chaussée" : `Étage ${floor}`;
 export const periodLabels = { morning: "Matin", noon: "Midi", evening: "Soir" };
 export const roomNumbers = Array.from({ length: 4 }, (_, floor) => Array.from({ length: floor === 0 ? 10 : 30 }, (_, i) => String(floor * 100 + i + 1).padStart(3, "0"))).flat();
-export function parisDate(date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+
+export function parisDate(date = new Date(), timeZone = "Europe/Paris") {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 }
-export function parisDateTime(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+
+export function parisDateTime(value: string, timeZone = "Europe/Paris", locale = "fr-FR") {
+  return new Intl.DateTimeFormat(locale, { timeZone, dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
-export function parisInput(value: string | null) {
+
+export function parisInput(value: string | null, timeZone = "Europe/Paris") {
   if (!value) return "";
   const date = new Date(value);
-  return `${parisDate(date)}T${new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" }).format(date)}`;
+  return `${parisDate(date, timeZone)}T${new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit" }).format(date)}`;
 }
+
 export function validServiceDate(value: string | undefined) {
   return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 }
