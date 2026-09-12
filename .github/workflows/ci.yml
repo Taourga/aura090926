@@ -15,6 +15,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
       NEXT_PUBLIC_SITE_URL: https://example.com
+      ESLINT_USE_FLAT_CONFIG: "false"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
