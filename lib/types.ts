@@ -21,8 +21,24 @@ export type PermissionStatus =
   | "returned";
 
 export type AttendanceStatus = "scheduled" | "present" | "absent";
-
 export type VisitStatus = "scheduled" | "arrived" | "departed" | "cancelled";
+export type CountryPackCode = "AURA_CORE" | "AURA_FR" | "AURA_DZ";
+export type FacilityConfigValue = string | number | boolean | null;
+export type FacilityConfig = Record<string, FacilityConfigValue>;
+
+export type FacilitySummary = {
+  id: string;
+  organizationId: string;
+  name: string;
+  countryPackCode: CountryPackCode;
+  countryCode: string;
+  timezone: string;
+  locale: string;
+  currency: string;
+  role: AppRole;
+  isPrimary: boolean;
+  isActive: boolean;
+};
 
 export type Profile = {
   id: string;
@@ -30,6 +46,9 @@ export type Profile = {
   role: AppRole;
   active: boolean;
   phone: string | null;
+  facility: FacilitySummary;
+  facilities: FacilitySummary[];
+  facilityConfig: FacilityConfig;
   activeStay?: { room_number: string | null; started_at: string } | null;
 };
 
