@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
+  { href: "/portal/doctor-availability", label: "Mes absences", icon: "◌", roles: ["doctor"] },
   { href: "/portal/contacts", label: "Contacts & proche", icon: "☎", roles: ["patient", "doctor", "manager", "nurse", "psychologist", "provider", "admin"] },
   { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance", "trusted_contact"] },
   { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
@@ -38,22 +39,15 @@ const routeFeatures: Record<string, string> = {
   "/portal/sport-room": "sport",
 };
 
-function featureEnabled(profile: Profile, feature?: string) {
-  if (!feature) return true;
-  return profile.facilityConfig[`features.${feature}`] !== false;
-}
+function featureEnabled(profile: Profile, feature?: string) { if (!feature) return true; return profile.facilityConfig[`features.${feature}`] !== false; }
 
 function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: boolean }) {
   const pathname = usePathname();
-  const items = profile.role === "trusted_contact"
-    ? [{ href: "/portal/proche", label: "Mon proche", icon: "♡" } satisfies NavItem]
-    : navItems;
+  const items = profile.role === "trusted_contact" ? [{ href: "/portal/proche", label: "Mon proche", icon: "♡" } satisfies NavItem] : navItems;
   return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
     {items.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
       const active = item.href === "/portal" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
-      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={item.label}>
-        <span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{item.label}</span>
-      </Link>;
+      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={item.label}><span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{item.label}</span></Link>;
     })}
   </nav>;
 }
@@ -66,20 +60,8 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const disabled = routeFeature && !featureEnabled(profile, routeFeature);
   const packLabel = profile.facility.countryPackCode === "AURA_FR" ? "FR" : profile.facility.countryPackCode === "AURA_DZ" ? "DZ" : "CORE";
   const isDemo = profile.facilityConfig.demo === true;
-
   return <div className="portal">
-    <aside className="sidebar">
-      <Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand"><span className="brand-mark">A</span><span>AURA</span></Link>
-      <Navigation profile={profile} />
-      <div className="sidebar-footer"><strong>{profile.facility.name}</strong><br />AURA {packLabel} · Accès sécurisé</div>
-    </aside>
-    <div className="portal-main">
-      <header className="portal-header">
-        <div className="portal-context"><div className="role-chip">{roleLabels[profile.role]} · {packLabel}</div>{isDemo && <span className="demo-chip">Données fictives</span>}<FacilitySwitcher facilities={profile.facilities} /></div>
-        <div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div>
-      </header>
-      <main className="content">{disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p></div></section> : children}</main>
-      <Navigation profile={profile} mobile />
-    </div>
+    <aside className="sidebar"><Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand"><span className="brand-mark">A</span><span>AURA</span></Link><Navigation profile={profile} /><div className="sidebar-footer"><strong>{profile.facility.name}</strong><br />AURA {packLabel} · Accès sécurisé</div></aside>
+    <div className="portal-main"><header className="portal-header"><div className="portal-context"><div className="role-chip">{roleLabels[profile.role]} · {packLabel}</div>{isDemo && <span className="demo-chip">Données fictives</span>}<FacilitySwitcher facilities={profile.facilities} /></div><div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div></header><main className="content">{disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p></div></section> : children}</main><Navigation profile={profile} mobile /></div>
   </div>;
 }
