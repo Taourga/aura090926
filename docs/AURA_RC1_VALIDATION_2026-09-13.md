@@ -13,6 +13,7 @@ AURA RC1 n'est **pas encore autorisé pour de vraies données patient** tant que
 - MFA pour les comptes professionnels sensibles;
 - protection contre mots de passe compromis si disponible sur le plan Supabase utilisé;
 - test de sauvegarde + restauration sur un environnement non-production;
+- test de reconstruction complète de la base depuis le dépôt (`schema.sql` + migrations applicables);
 - validation hébergement / conformité France avant données de santé réelles FR;
 - validation hébergement / transferts / conformité Algérie avant données de santé réelles DZ;
 - protection de branche `master` côté GitHub si les permissions d'administration le permettent.
@@ -114,6 +115,18 @@ Déjà validé dans LOT 3:
 - fonctions métier privilégiées authentifiées encore signalées par l'advisor: attendu et audité progressivement;
 - les RPC critiques multi-cliniques sont scoppées par `facility_id`;
 - `Leaked Password Protection` reste désactivé et constitue une gate manuelle avant production réelle.
+
+## Reproductibilité de la base
+
+Les migrations de stabilisation LOT 1 à LOT 4 sont présentes dans l'historique Supabase live et versionnées dans GitHub.
+
+Le dépôt contient aussi des migrations antérieures et `supabase/schema.sql` qui précèdent l'historique actuellement enregistré par Supabase. Cela signifie que l'état live est documenté, mais qu'une reconstruction **from scratch** doit encore être répétée sur une base non-production avant d'autoriser de vraies données patient.
+
+Règle RC1:
+
+- `supabase/schema.sql` = baseline historique de reconstruction;
+- migrations versionnées = évolutions applicatives;
+- aucune restauration ou reconstruction complète ne doit être testée directement sur la base actuelle.
 
 ## Exploitation / zéro coût
 
