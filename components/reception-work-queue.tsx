@@ -3,6 +3,7 @@ import { MovementActions } from "@/components/permission-actions";
 import { VisitMovementActions } from "@/components/visit-actions";
 import { BulletinReceptionActions } from "@/components/bulletin-request-button";
 import { OperationalTaskButton } from "@/components/operational-task-button";
+import { CompletePatientHelpButton } from "@/components/patient-help-feedback";
 import { formatDateTime } from "@/lib/format";
 
 type Rel = { full_name: string | null } | { full_name: string | null }[] | null;
@@ -13,22 +14,26 @@ type Visit = { id: string; status: string; scheduled_start: string; visitor_one_
 type Bulletin = { id: string; status: string; requested_at: string; email_to: string | null; patient: Rel };
 type Task = { id: string; title: string; due_at: string | null; patient: Rel };
 type Discharge = { stay_id: string; patient_name: string; room_number: string | null; planned_discharge_at: string | null };
+type Help = { id: string; category: string; message: string | null; created_at: string; patient: Rel };
 
 type QueueItem = {
   key: string;
   sortAt: number;
-  kind: "departure" | "return" | "visit-arrival" | "visit-departure" | "bulletin" | "task" | "discharge";
+  kind: "departure" | "return" | "visit-arrival" | "visit-departure" | "bulletin" | "task" | "discharge" | "help";
   title: string;
   detail: string;
-  payload: Permission | Visit | Bulletin | Task | Discharge;
+  payload: Permission | Visit | Bulletin | Task | Discharge | Help;
 };
 
-export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, discharges, locale, timezone }: {
+const helpLabel: Record<string, string> = { room: "Chambre", meal: "Repas", planning: "Planning", admin: "Administratif" };
+
+export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, discharges, helpRequests, locale, timezone }: {
   permissions: Permission[];
   visits: Visit[];
   bulletins: Bulletin[];
   tasks: Task[];
   discharges: Discharge[];
+  helpRequests: Help[];
   locale: string;
   timezone: string;
 }) {
@@ -40,14 +45,15 @@ export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, disc
     ...visits.filter((v) => v.status === "scheduled").map((v) => ({ key: `va-${v.id}`, sortAt: new Date(v.scheduled_start).getTime(), kind: "visit-arrival" as const, title: `Visite · ${v.visitor_one_name}`, detail: `${nameOf(v.patient)} · ${fmt(v.scheduled_start)}`, payload: v })),
     ...visits.filter((v) => v.status === "arrived").map((v) => ({ key: `vd-${v.id}`, sortAt: now - 1000, kind: "visit-departure" as const, title: `Visiteur sur site · ${v.visitor_one_name}`, detail: `${nameOf(v.patient)} · départ à enregistrer`, payload: v })),
     ...bulletins.map((b) => ({ key: `bul-${b.id}`, sortAt: new Date(b.requested_at).getTime(), kind: "bulletin" as const, title: `Bulletin · ${nameOf(b.patient)}`, detail: `${b.status === "pending" ? "À générer" : "À envoyer"}${b.email_to ? ` · ${b.email_to}` : ""}`, payload: b })),
+    ...helpRequests.map((h) => ({ key: `help-${h.id}`, sortAt: new Date(h.created_at).getTime(), kind: "help" as const, title: `${helpLabel[h.category] || "Demande"} · ${nameOf(h.patient)}`, detail: h.message || "Demande patient sans précision", payload: h })),
     ...tasks.map((t) => ({ key: `task-${t.id}`, sortAt: t.due_at ? new Date(t.due_at).getTime() : now + 86400000, kind: "task" as const, title: t.title, detail: `${nameOf(t.patient)}${t.due_at ? ` · ${fmt(t.due_at)}` : ""}`, payload: t })),
     ...discharges.filter((d) => d.planned_discharge_at).map((d) => ({ key: `dis-${d.stay_id}`, sortAt: new Date(d.planned_discharge_at as string).getTime(), kind: "discharge" as const, title: `Sortie définitive · ${d.patient_name}`, detail: `Chambre ${d.room_number || "—"} · ${fmt(d.planned_discharge_at)}`, payload: d })),
   ].sort((a, b) => a.sortAt - b.sortAt);
 
   return <section className="reception-queue-card">
-    <div className="reception-queue-head"><div><p className="section-kicker">File de travail unique</p><h2>À traiter à l’accueil</h2><p>Départs, retours, visites, documents et sorties définitives dans une seule liste.</p></div><span className="count-pill">{items.length}</span></div>
-    <div className="reception-queue-list">{items.length ? items.slice(0, 14).map((item) => <div className={`reception-queue-row reception-queue-row--${item.kind}`} key={item.key}>
-      <div className="reception-queue-icon" aria-hidden="true">{item.kind === "departure" ? "↗" : item.kind === "return" ? "↙" : item.kind.startsWith("visit") ? "♧" : item.kind === "bulletin" ? "▤" : item.kind === "task" ? "✓" : "⇥"}</div>
+    <div className="reception-queue-head"><div><p className="section-kicker">File de travail unique</p><h2>À traiter à l’accueil</h2><p>Départs, retours, visites, demandes patient, documents et sorties définitives dans une seule liste.</p></div><span className="count-pill">{items.length}</span></div>
+    <div className="reception-queue-list">{items.length ? items.slice(0, 16).map((item) => <div className={`reception-queue-row reception-queue-row--${item.kind}`} key={item.key}>
+      <div className="reception-queue-icon" aria-hidden="true">{item.kind === "departure" ? "↗" : item.kind === "return" ? "↙" : item.kind.startsWith("visit") ? "♧" : item.kind === "bulletin" ? "▤" : item.kind === "task" ? "✓" : item.kind === "help" ? "?" : "⇥"}</div>
       <div className="reception-queue-copy"><strong>{item.title}</strong><small>{item.detail}</small></div>
       <div className="reception-queue-action">
         {item.kind === "departure" && <MovementActions permissionId={(item.payload as Permission).id} action="depart" />}
@@ -55,6 +61,7 @@ export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, disc
         {item.kind === "visit-arrival" && <VisitMovementActions visitId={(item.payload as Visit).id} action="arrive" />}
         {item.kind === "visit-departure" && <VisitMovementActions visitId={(item.payload as Visit).id} action="depart" />}
         {item.kind === "bulletin" && <BulletinReceptionActions requestId={(item.payload as Bulletin).id} status={(item.payload as Bulletin).status} />}
+        {item.kind === "help" && <CompletePatientHelpButton id={(item.payload as Help).id} />}
         {item.kind === "task" && <OperationalTaskButton taskId={(item.payload as Task).id} />}
         {item.kind === "discharge" && <Link className="button button-secondary button-small" href="/portal/discharges">Ouvrir</Link>}
       </div>
