@@ -12,13 +12,12 @@ type NavItem = { href: string; label: string; icon: string; feature?: string; ro
 const navItems: NavItem[] = [
   { href: "/portal", label: "Accueil", icon: "⌂" },
   { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
-  { href: "/portal/handoff", label: "Relève", icon: "↻", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
-  { href: "/portal/roi", label: "AURA ROI", icon: "↗", roles: ["doctor", "manager", "admin", "governance"] },
+  { href: "/portal/handoff", label: "Relève", icon: "↻", roles: ["nurse"] },
+  { href: "/portal/roi", label: "AURA ROI", icon: "↗", roles: ["admin"] },
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
-  { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
+  { href: "/portal/patients", label: "Mes patients", icon: "◎", roles: ["doctor"] },
   { href: "/portal/doctor-availability", label: "Mes absences", icon: "◌", roles: ["doctor"] },
-  { href: "/portal/contacts", label: "Contacts & proche", icon: "☎", roles: ["patient", "doctor", "manager", "nurse", "psychologist", "provider", "admin"] },
   { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance", "trusted_contact"] },
   { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
   { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical", "trusted_contact"] },
@@ -38,7 +37,6 @@ const routeFeatures: Record<string, string> = {
   "/portal/visits": "visits",
   "/portal/menus": "menus",
   "/portal/information": "information",
-  "/portal/sport-room": "sport",
 };
 
 function featureEnabled(profile: Profile, feature?: string) { if (!feature) return true; return profile.facilityConfig[`features.${feature}`] !== false; }
