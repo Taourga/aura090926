@@ -63,6 +63,8 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
   const enrollmentList = (enrollments || []) as Enrollment[];
   const activePermission = permissionList.find((p)=>["submitted","waiting","approved","departed"].includes(p.status));
   const activePortal = !!trusted?.portal_enabled && !!trusted.consented_at && !trusted.revoked_at && !!trusted.user_id && (!trusted.access_expires_at || new Date(trusted.access_expires_at) > new Date());
+  const patientPhone = contact?.mobile_phone || selected?.phone || null;
+  const patientEmail = contact?.personal_email || null;
 
   return <PortalShell profile={profile}>
     <div className="page-intro"><div><div className="section-kicker">Médecin référent</div><h1>Mes patients</h1><p>Uniquement les patients dont vous assurez le suivi référent.</p></div></div>
@@ -89,14 +91,14 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
           <div className="doctor-simple-grid">
             <article className="doctor-simple-card">
               <div className="doctor-simple-card-head"><h3>Coordonnées</h3></div>
-              <strong>{contact?.mobile_phone || selected.phone || "Téléphone non renseigné"}</strong>
-              <span>{contact?.personal_email || "Email non renseigné"}</span>
+              {patientPhone ? <a className="contact-link" href={`tel:${patientPhone.replace(/\s+/g,"")}`}>{patientPhone}</a> : <strong>Téléphone non renseigné</strong>}
+              {patientEmail ? <a className="contact-link" href={`mailto:${patientEmail}`}>{patientEmail}</a> : <span>Email non renseigné</span>}
               <span>{[contact?.address_line1,[contact?.postal_code,contact?.city].filter(Boolean).join(" ")].filter(Boolean).join(" · ") || "Adresse non renseignée"}</span>
             </article>
 
             <article className="doctor-simple-card doctor-simple-card--trusted">
               <div className="doctor-simple-card-head"><h3>Personne de confiance</h3>{trusted && <span className={activePortal?"badge badge-success":"badge badge-neutral"}>{activePortal?"Portail actif":"Contact uniquement"}</span>}</div>
-              {trusted ? <><strong>{trusted.full_name} · {trusted.relationship}</strong><span>{trusted.phone || "Téléphone non renseigné"}</span><span>{trusted.email || "Email non renseigné"}</span>{trusted.is_emergency_contact && <small>Contact d’urgence</small>}</> : <span>Non renseignée</span>}
+              {trusted ? <><strong>{trusted.full_name} · {trusted.relationship}</strong>{trusted.phone ? <a className="contact-link" href={`tel:${trusted.phone.replace(/\s+/g,"")}`}>{trusted.phone}</a> : <span>Téléphone non renseigné</span>}{trusted.email ? <a className="contact-link" href={`mailto:${trusted.email}`}>{trusted.email}</a> : <span>Email non renseigné</span>}{trusted.is_emergency_contact && <small>Contact d’urgence</small>}</> : <span>Non renseignée</span>}
             </article>
 
             <article className="doctor-simple-card">
