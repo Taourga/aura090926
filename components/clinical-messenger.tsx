@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { markClinicalMessagesRead, sendClinicalMessage } from "@/app/portal/messages/actions";
 import { ActionFeedback } from "@/components/action-feedback";
 
-type ContactRole = "doctor" | "nurse" | "manager" | "governance";
+type ContactRole = "doctor" | "nurse" | "manager" | "governance" | "patient";
 type Contact = { id: string; full_name: string; role: ContactRole };
 type Message = { id: string; sender_id: string; recipient_id: string; body: string; priority: number; read_at: string | null; created_at: string };
 
@@ -14,10 +14,11 @@ const roleLabel: Record<ContactRole, string> = {
   nurse: "Infirmier·ère",
   manager: "Cadre",
   governance: "Gouvernance",
+  patient: "Patient",
 };
 const priorityLabel: Record<number, string> = { 1: "Normal", 2: "Important", 3: "Critique" };
 
-export function ClinicalMessenger({ currentUserId, contacts, initialMessages }: { currentUserId: string; contacts: Contact[]; initialMessages: Message[] }) {
+export function ClinicalMessenger({ currentUserId, contacts, initialMessages, isPatient = false }: { currentUserId: string; contacts: Contact[]; initialMessages: Message[]; isPatient?: boolean }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState(() => contacts.find((contact) => initialMessages.some((message) => message.sender_id === contact.id && !message.read_at))?.id || contacts[0]?.id || "");
   const [feedback, setFeedback] = useState<{ error?: string; success?: string }>({});
@@ -38,7 +39,7 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages }: 
     const data = new FormData(form);
     const recipientId = String(data.get("recipient") || selectedId);
     const body = String(data.get("body") || "");
-    const priority = Number(data.get("priority") || 1);
+    const priority = isPatient ? 1 : Number(data.get("priority") || 1);
     if (!recipientId) return;
     setSelectedId(recipientId); setLoading(true); setFeedback({});
     const result = await sendClinicalMessage(recipientId, body, priority);
@@ -47,7 +48,7 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages }: 
 
   return <section className="messenger card">
     <aside className="messenger-contacts" aria-label="Contacts">
-      <div className="messenger-title"><strong>Contacts</strong><span>{contacts.length}</span></div>
+      <div className="messenger-title"><strong>{isPatient ? "Équipe soignante" : "Contacts"}</strong><span>{contacts.length}</span></div>
       {contacts.map((contact) => {
         const unread = initialMessages.filter((message) => message.sender_id === contact.id && !message.read_at).length;
         return <button type="button" key={contact.id} onClick={() => selectContact(contact.id)} className={selectedId === contact.id ? "messenger-contact active" : "messenger-contact"}>
@@ -55,14 +56,14 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages }: 
           <span><strong>{contact.full_name}</strong><small>{roleLabel[contact.role]}</small></span>{unread > 0 && <b>{unread}</b>}
         </button>;
       })}
-      {!contacts.length && <p className="empty">Aucun contact disponible.</p>}
+      {!contacts.length && <p className="empty">{isPatient ? "Aucun membre de l’équipe n’est disponible pour le moment." : "Aucun contact disponible."}</p>}
     </aside>
 
     <div className="messenger-thread">
       <div className="messenger-thread-head"><div><strong>{selected?.full_name || "Nouveau message"}</strong>{selected && <small>{roleLabel[selected.role]}</small>}</div><span className="demo-chip">Accusé de lecture actif</span></div>
       <div className="message-list" aria-live="polite">
         {messages.length ? messages.map((message) => <div key={message.id} className={`${message.sender_id === currentUserId ? "message-bubble own" : "message-bubble"} priority-${message.priority}`}>
-          <div className="message-priority">Niveau {message.priority} · {priorityLabel[message.priority] || "Normal"}</div>
+          {!isPatient && <div className="message-priority">Niveau {message.priority} · {priorityLabel[message.priority] || "Normal"}</div>}
           <p>{message.body}</p>
           <time>{new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(message.created_at))}
             {message.sender_id === currentUserId ? message.read_at ? ` · ✓✓ Lu ${new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.read_at))}` : " · ✓ Envoyé" : ""}
@@ -74,9 +75,10 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages }: 
         <ActionFeedback message={feedback.success} error={feedback.error} />
         <div className="message-compose-grid">
           <label className="field">Destinataire<select name="recipient" value={selectedId} onChange={(e) => selectContact(e.target.value)} required><option value="">Choisir un destinataire</option>{contacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.full_name} · {roleLabel[contact.role]}</option>)}</select></label>
-          <label className="field">Importance<select name="priority" defaultValue="1"><option value="1">1 · Normal</option><option value="2">2 · Important</option><option value="3">3 · Critique</option></select></label>
+          {!isPatient && <label className="field">Importance<select name="priority" defaultValue="1"><option value="1">1 · Normal</option><option value="2">2 · Important</option><option value="3">3 · Critique</option></select></label>}
         </div>
-        <label className="field">Message<textarea name="body" required maxLength={2000} rows={3} placeholder="Écrire un message…" /></label>
+        <label className="field">Message<textarea name="body" required maxLength={2000} rows={3} placeholder={isPatient ? "Écrire à votre équipe soignante…" : "Écrire un message…"} /></label>
+        {isPatient && <p className="card-subtitle">Pour une urgence médicale, utilisez le dispositif d’appel prévu par l’établissement.</p>}
         <button className="button button-primary" disabled={loading || !selectedId}>{loading ? "Envoi…" : "Envoyer"}</button>
       </form>
     </div>
