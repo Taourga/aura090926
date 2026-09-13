@@ -9,7 +9,8 @@ export type AppRole =
   | "coach"
   | "nurse"
   | "admin"
-  | "provider";
+  | "provider"
+  | "trusted_contact";
 
 export type PermissionStatus =
   | "submitted"
@@ -64,6 +65,7 @@ export const roleLabels: Record<AppRole, string> = {
   nurse: "Infirmier",
   admin: "Administrateur",
   provider: "Intervenant",
+  trusted_contact: "Proche autorisé",
 };
 
 export const permissionLabels: Record<PermissionStatus, string> = {
