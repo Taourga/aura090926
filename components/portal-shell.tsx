@@ -63,6 +63,14 @@ const routeLabels: Array<[string, string]> = [
 ];
 
 function featureEnabled(profile: Profile, feature?: string) { if (!feature) return true; return profile.facilityConfig[`features.${feature}`] !== false; }
+function labelForRole(item: Pick<NavItem, "href" | "label">, role: Profile["role"]) {
+  if (role !== "patient") return item.label;
+  if (item.href === "/portal/permissions") return "Mes sorties";
+  if (item.href === "/portal/appointments") return "Mon planning";
+  if (item.href === "/portal/visits") return "Mes visites";
+  if (item.href === "/portal/menus") return "Mes menus";
+  return item.label;
+}
 
 function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: boolean }) {
   const pathname = usePathname();
@@ -70,7 +78,8 @@ function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: bo
   return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
     {items.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
       const active = item.href === "/portal" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
-      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={item.label}><span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{item.label}</span></Link>;
+      const label = labelForRole(item, profile.role);
+      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={label}><span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{label}</span></Link>;
     })}
   </nav>;
 }
@@ -84,7 +93,8 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const packLabel = profile.facility.countryPackCode === "AURA_FR" ? "FR" : profile.facility.countryPackCode === "AURA_DZ" ? "DZ" : "CORE";
   const isDemo = profile.facilityConfig.demo === true;
   const showMessageBell = ["patient", "doctor", "nurse", "manager", "governance"].includes(profile.role);
-  const currentSection = pathname === "/portal" ? "Accueil" : routeLabels.find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1] || "AURA";
+  const rawSection = pathname === "/portal" ? "Accueil" : routeLabels.find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1] || "AURA";
+  const currentSection = labelForRole({ href: pathname, label: rawSection }, profile.role);
   const helpHref = profile.role === "admin" ? "/portal/admin" : profile.role === "trusted_contact" ? "/portal/proche" : featureEnabled(profile, "information") && profile.role !== "doctor" ? "/portal/information" : "/portal";
   const helpLabel = profile.role === "admin" ? "Configurer" : helpHref === "/portal/information" ? "Aide & infos" : "Retour accueil";
 
