@@ -49,11 +49,20 @@
 .admin-intro~.metric-grid .metric{min-height:108px}
 .admin-intro~.metric-grid .metric strong{font-size:1.55rem}
 
+/* Stable navigation: long staff menus must never disappear below the viewport. */
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;overscroll-behavior:contain}
+.portal-header{position:sticky;top:0;z-index:50}
+.sidebar .nav a{font-size:13.5px!important;padding-top:9px!important;padding-bottom:9px!important}
+.sidebar .nav-label{line-height:1.2}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}
+
 /* Operational screens: reduce visual noise, preserve action hierarchy. */
 .reception-fastqueue,.doctor-simple-header,.role-hero,.pulse-card,.work-card{box-shadow:0 4px 16px rgba(21,44,57,.04)!important}
 .card-header{padding-top:14px!important;padding-bottom:14px!important}
 .card-body{padding-top:15px!important;padding-bottom:15px!important}
 .section-kicker{letter-spacing:.075em}
+.history-details>summary{min-height:42px;padding:9px 12px!important;border:1px solid var(--aura-line);border-radius:12px;background:#fff}
 
 /* Tables: keep actions readable and avoid crushed labels. */
 .data-table td,.data-table th{white-space:normal}
@@ -65,10 +74,6 @@
 .field{min-width:0}
 .field input,.field select,.field textarea{max-width:100%}
 
-/* Sidebar: make scanning easier on long staff menus. */
-.sidebar .nav a{font-size:13.5px!important;padding-top:9px!important;padding-bottom:9px!important}
-.sidebar .nav-label{line-height:1.2}
-
 @media(max-width:1180px){
   .patient-cockpit-more-grid{grid-template-columns:1fr 1fr!important;grid-template-areas:"help help" "feedback info"}
   .patient-cockpit-more-grid .patient-help-card{min-height:auto}
@@ -76,9 +81,13 @@
 }
 
 @media(max-width:900px){
+  .sidebar{position:static;height:auto;overflow:visible}
+  .portal-header{position:sticky;top:0}
   .patient-cockpit-more-grid{grid-template-columns:1fr!important;grid-template-areas:"help" "feedback" "info"}
   .permission-hero--after-calendar{grid-template-columns:1fr!important}
   .admin-intro~.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mobile-nav{scroll-snap-type:x proximity;box-shadow:0 -8px 24px rgba(13,44,68,.12)}
+  .mobile-nav a{scroll-snap-align:start}
 }
 
 @media(max-width:700px){
