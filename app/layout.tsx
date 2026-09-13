@@ -5,6 +5,7 @@ import "./aurademo.css";
 import "./aurademo-actions.css";
 import "./consent.css";
 import "./planning.css";
+import "./patient-experience.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
