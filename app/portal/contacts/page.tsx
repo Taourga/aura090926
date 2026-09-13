@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 type Patient = { id: string; full_name: string };
 type ContactCard = { patient_id: string; mobile_phone: string | null; personal_email: string | null; address_line1: string | null; postal_code: string | null; city: string | null; country_code: string | null };
 type ScopeMap = { presence?: boolean; planning?: boolean; permissions?: boolean; activities?: boolean; visits?: boolean; menus?: boolean; information?: boolean; discharge?: boolean };
-type Trusted = { patient_id: string; full_name: string; relationship: string; phone: string | null; email: string | null; portal_enabled: boolean; scopes: ScopeMap; consented_at: string | null; revoked_at: string | null };
+type Trusted = { patient_id: string; full_name: string; relationship: string; phone: string | null; email: string | null; user_id: string | null; portal_enabled: boolean; scopes: ScopeMap; consented_at: string | null; revoked_at: string | null };
 
 const allowed = ["patient", "doctor", "manager", "nurse", "psychologist", "provider", "admin"];
 const managers = ["patient", "doctor", "manager", "nurse", "admin"];
@@ -26,7 +26,7 @@ export default async function PatientContactsPage() {
   const [{ data: patients }, { data: cards }, { data: trusted }] = await Promise.all([
     patientsQuery,
     supabase.from("patient_contact_cards").select("patient_id,mobile_phone,personal_email,address_line1,postal_code,city,country_code"),
-    supabase.from("trusted_contacts").select("patient_id,full_name,relationship,phone,email,portal_enabled,scopes,consented_at,revoked_at"),
+    supabase.from("trusted_contacts").select("patient_id,full_name,relationship,phone,email,user_id,portal_enabled,scopes,consented_at,revoked_at"),
   ]);
   const patientList = (patients || []) as Patient[];
   const cardByPatient = new Map(((cards || []) as ContactCard[]).map((item) => [item.patient_id, item]));
@@ -41,10 +41,10 @@ export default async function PatientContactsPage() {
       {patientList.map((patient) => {
         const card = cardByPatient.get(patient.id);
         const person = trustedByPatient.get(patient.id);
-        const activePortal = !!person?.portal_enabled && !!person.consented_at && !person.revoked_at;
-        const canManage = canManageRole && (profile.role !== "patient" || profile.id === patient.id);
+        const activePortal = !!person?.portal_enabled && !!person.consented_at && !person.revoked_at && !!person.user_id;
+        const canManage = canManageRole && !!person?.user_id && (profile.role !== "patient" || profile.id === patient.id);
         return <section className="work-card contact-card" key={patient.id}>
-          <div className="work-card-head"><div><p className="section-kicker">Patient</p><h2>{patient.full_name}</h2></div>{person && <span className={activePortal ? "badge badge-success" : "badge badge-neutral"}>{activePortal ? "Proche connecté" : "Contact uniquement"}</span>}</div>
+          <div className="work-card-head"><div><p className="section-kicker">Patient</p><h2>{patient.full_name}</h2></div>{person && <span className={activePortal ? "badge badge-success" : "badge badge-neutral"}>{activePortal ? "Proche connecté" : person.user_id ? "Portail désactivé" : "Contact uniquement"}</span>}</div>
           <div className="work-card-body">
             <div className="contact-info-grid">
               <div><span className="row-meta">Téléphone patient</span><strong>{card?.mobile_phone || "Non renseigné"}</strong></div>
@@ -56,9 +56,9 @@ export default async function PatientContactsPage() {
               <div className="trusted-person-card">
                 <div><span className="row-meta">Personne de confiance</span><strong>{person.full_name}</strong><small>{person.relationship}</small></div>
                 <div><span className="row-meta">Coordonnées</span><strong>{person.phone || "Téléphone non renseigné"}</strong><small>{person.email || "Email non renseigné"}</small></div>
-                <div><span className="row-meta">Consentement</span><strong>{activePortal ? `Actif depuis ${dt(person.consented_at)}` : person.revoked_at ? `Révoqué le ${dt(person.revoked_at)}` : "Portail non activé"}</strong><small>L’accès peut être retiré à tout moment.</small></div>
+                <div><span className="row-meta">Consentement</span><strong>{activePortal ? `Actif depuis ${dt(person.consented_at)}` : person.revoked_at ? `Révoqué le ${dt(person.revoked_at)}` : person.user_id ? "Portail non activé" : "Aucun compte proche lié"}</strong><small>{person.user_id ? "L’accès peut être retiré à tout moment." : "La personne reste enregistrée comme contact sans accès numérique."}</small></div>
               </div>
-              <TrustedContactConsent patientId={patient.id} trustedName={person.full_name} initialEnabled={activePortal} initialScopes={person.scopes} canManage={canManage} />
+              {person.user_id ? <TrustedContactConsent patientId={patient.id} trustedName={person.full_name} initialEnabled={activePortal} initialScopes={person.scopes} canManage={canManage} /> : <div className="overview-note"><strong>Contact uniquement</strong><span>Un compte proche autorisé devra être créé et rattaché avant de pouvoir activer le portail.</span></div>}
             </> : <p className="empty">Aucune personne de confiance renseignée pour ce patient.</p>}
           </div>
         </section>;
