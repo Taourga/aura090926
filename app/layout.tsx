@@ -3,6 +3,7 @@ import "./globals.css";
 import "./aura-polish.css";
 import "./aurademo.css";
 import "./aurademo-actions.css";
+import "./consent.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
