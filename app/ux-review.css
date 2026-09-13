@@ -1,0 +1,136 @@
+/* AURA UX review — shared polish across all profiles and modules */
+
+:root{
+  --aura-focus:#0d6670;
+  --aura-ink:#16323c;
+  --aura-muted:#647780;
+  --aura-line:#dfe9ec;
+  --aura-soft:#f7fafb;
+  --aura-soft-strong:#eef7f7;
+  --aura-radius:16px;
+}
+
+html{scroll-behavior:smooth}
+body{color:var(--aura-ink)}
+
+.skip-link{position:fixed;left:16px;top:12px;z-index:9999;transform:translateY(-140%);background:#0d6670;color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.skip-link:focus{transform:translateY(0)}
+
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid rgba(13,102,112,.34);outline-offset:3px}
+:where(button,.button,a){-webkit-tap-highlight-color:transparent}
+
+.portal-header{min-height:74px;padding-top:10px;padding-bottom:10px}
+.portal-context{display:flex;align-items:center;gap:9px;min-width:0}
+.portal-context-copy{display:grid;gap:1px;min-width:112px}
+.portal-eyebrow{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#73858d}
+.portal-section-title{font-size:15px;line-height:1.2;color:#18343e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role-chip{padding:5px 8px!important;font-size:10px!important;letter-spacing:.05em}
+.header-help-link{font-size:12px;font-weight:700;color:#0d6670;text-decoration:none;padding:8px 10px;border-radius:10px;border:1px solid transparent;white-space:nowrap}
+.header-help-link:hover{background:#eef7f7;border-color:#dce9ea}
+.account{min-width:0}
+.account>div:last-child{min-width:0}
+.account strong{display:block;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-stay{display:block;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.sidebar .nav{padding-right:8px}
+.sidebar .nav a{min-height:42px;border-radius:11px;transition:background .15s ease,color .15s ease,transform .15s ease}
+.sidebar .nav a:hover{transform:translateX(2px)}
+.sidebar .nav a.active{box-shadow:inset 3px 0 0 #4fa3a8}
+.sidebar-footer{line-height:1.45}
+
+.content{width:min(100%,1480px);margin-inline:auto}
+.content:focus{outline:none}
+.content>h1:first-child,.content>section:first-child h1:first-child{letter-spacing:-.025em}
+.content p{line-height:1.55}
+
+.card,.panel,.surface{border-color:var(--aura-line)!important;box-shadow:0 7px 24px rgba(21,44,57,.035)}
+.card-header{gap:12px;align-items:flex-start}
+.card-header h2,.card-header h3{line-height:1.25}
+.card-body{min-width:0}
+
+.button{min-height:40px;border-radius:11px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.button:hover{transform:translateY(-1px)}
+.button-primary{box-shadow:0 6px 14px rgba(13,102,112,.14)}
+.button:disabled{transform:none;box-shadow:none;cursor:not-allowed;opacity:.55}
+
+label{font-weight:650;color:#314b55}
+input,select,textarea{min-height:42px;border-radius:10px!important;border-color:#d8e4e7!important;background:#fff!important;font-size:14px!important}
+textarea{min-height:94px;line-height:1.5}
+input::placeholder,textarea::placeholder{color:#97a6ac}
+.form-grid,.form-row{gap:12px!important}
+
+.table-wrap,.table-wrapper{overflow:auto;border-radius:14px;border:1px solid var(--aura-line);background:#fff}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{position:sticky;top:0;z-index:1;background:#f4f8f9!important;color:#536871!important;font-size:11px!important;letter-spacing:.04em;text-transform:uppercase}
+th,td{padding-top:11px!important;padding-bottom:11px!important;vertical-align:middle}
+tbody tr:hover td{background:#fbfdfd}
+
+.empty{color:var(--aura-muted);line-height:1.55}
+.badge,.status,.chip{white-space:nowrap}
+
+.content details{border-radius:14px}
+.content summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.content summary::-webkit-details-marker{display:none}
+.content summary::after{content:"+";font-size:18px;line-height:1;color:#637780;font-weight:500}
+.content details[open]>summary::after{content:"–"}
+
+.patient-cockpit-event,.patient-cockpit-actions>a,.patient-cockpit-side>a,.doctor-simple-patient{transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease,background .15s ease}
+.patient-cockpit-event:hover,.patient-cockpit-side>a:hover,.doctor-simple-patient:hover{transform:translateY(-1px)}
+.patient-cockpit-actions>a:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(13,102,112,.18)}
+.patient-cockpit-head h1{letter-spacing:-.035em}
+.patient-cockpit-side>*{min-height:102px}
+.patient-cockpit-more summary{min-height:46px}
+
+.doctor-simple-header,.reception-fastqueue,.patient-cockpit-day,.patient-cockpit-side>*{box-shadow:0 7px 22px rgba(21,44,57,.03)}
+.doctor-simple-actions{flex-wrap:wrap;justify-content:flex-end}
+.doctor-simple-row strong{overflow-wrap:anywhere}
+
+.clinical-messenger,.messenger,.messages-layout{min-height:0}
+
+/* Make dense operational screens easier to scan without hiding information. */
+.content :where(.grid,.metric-grid,.staff-metric-grid)>*{min-width:0}
+.content :where(h1,h2,h3){text-wrap:balance}
+.content :where(p,.empty,small){text-wrap:pretty}
+
+/* Clear hierarchy for destructive or secondary actions. */
+button[class*="danger"],.button-danger{box-shadow:none!important}
+.button-secondary,.button-ghost{box-shadow:none!important}
+
+/* Small utility treatment for links embedded in information-rich cards. */
+.card a:not(.button),.panel a:not(.button),.patient-mini-info a{font-weight:650;text-underline-offset:3px}
+
+@media(max-width:1100px){
+  .header-help-link{display:none}
+  .account strong{max-width:150px}
+  .account-stay{max-width:190px}
+}
+
+@media(max-width:900px){
+  .portal-header{min-height:64px}
+  .portal-context-copy{min-width:0}
+  .portal-section-title{max-width:180px}
+  .role-chip{display:none!important}
+  .content{padding-bottom:84px!important}
+  .mobile-nav{overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:none;justify-content:flex-start!important;padding-left:8px!important;padding-right:8px!important}
+  .mobile-nav::-webkit-scrollbar{display:none}
+  .mobile-nav a{flex:0 0 auto;min-width:70px}
+}
+
+@media(max-width:640px){
+  .portal-context{gap:6px}
+  .portal-eyebrow{font-size:9px}
+  .portal-section-title{max-width:130px;font-size:13px}
+  .demo-chip{display:none!important}
+  .account .avatar{width:34px;height:34px}
+  .account strong{max-width:112px;font-size:12px}
+  .account-stay{display:none}
+  .content{padding-left:12px!important;padding-right:12px!important}
+  .card,.patient-cockpit-day,.patient-cockpit-side>*,.doctor-simple-header,.doctor-simple-card,.reception-fastqueue{border-radius:13px!important}
+  .patient-cockpit-head h1{font-size:26px}
+  .patient-cockpit-actions>a{min-height:68px}
+  table{min-width:640px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
