@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { TrustedContactConsent } from "@/components/trusted-contact-consent";
@@ -35,6 +36,8 @@ function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }
 
+function phoneHref(phone: string) { return `tel:${phone.replace(/\s+/g, "")}`; }
+
 export default async function PatientContactsPage() {
   const profile = await requireProfile();
   if (!allowed.includes(profile.role)) redirect("/portal");
@@ -55,7 +58,7 @@ export default async function PatientContactsPage() {
   const dt = (value: string | null) => value ? formatDateTime(value, profile.facility.locale, profile.facility.timezone) : "Non renseigné";
 
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><div className="section-kicker">Coordonnées & consentement</div><h1>{profile.role === "patient" ? "Mes contacts & mon proche" : "Contacts patients"}</h1><p>{profile.role === "patient" ? "Vos coordonnées, votre personne de confiance et le contrôle précis des informations que vous choisissez de partager." : "Une lecture claire : d’abord le patient, puis sa personne de confiance, puis les droits de partage."}</p></div></div>
+    <div className="page-intro"><div><div className="section-kicker">Coordonnées & consentement</div><h1>{profile.role === "patient" ? "Mes contacts & mon proche" : "Contacts patients"}</h1><p>{profile.role === "patient" ? "Retrouvez vos coordonnées, votre personne de confiance et les informations de séjour que vous choisissez de partager." : "Une lecture claire : d’abord le patient, puis sa personne de confiance, puis les droits de partage."}</p></div><div className="page-intro-actions">{profile.role === "patient" && <><Link href="/portal/messages" className="button button-secondary">Messagerie</Link><Link href="/portal/information" className="button button-secondary">Infos pratiques</Link></>}</div></div>
 
     <div className="contact-card-grid">
       {patientList.map((patient) => {
@@ -72,8 +75,8 @@ export default async function PatientContactsPage() {
                 <div><span className="identity-eyebrow">PATIENT</span><h2>{patient.full_name}</h2><p>Coordonnées personnelles du patient</p></div>
               </div>
               <div className="identity-details">
-                <div><span>Téléphone du patient</span><strong>{card?.mobile_phone || "Non renseigné"}</strong></div>
-                <div><span>Email du patient</span><strong>{card?.personal_email || "Non renseigné"}</strong></div>
+                <div><span>Téléphone du patient</span>{card?.mobile_phone ? <a className="contact-link" href={phoneHref(card.mobile_phone)}>{card.mobile_phone}</a> : <strong>Non renseigné</strong>}</div>
+                <div><span>Email du patient</span>{card?.personal_email ? <a className="contact-link" href={`mailto:${card.personal_email}`}>{card.personal_email}</a> : <strong>Non renseigné</strong>}</div>
                 <div className="identity-detail-wide"><span>Adresse du patient</span><strong>{card ? [card.address_line1, [card.postal_code, card.city].filter(Boolean).join(" ")].filter(Boolean).join(" · ") || "Non renseignée" : "Non renseignée"}</strong></div>
               </div>
             </section>
@@ -85,8 +88,8 @@ export default async function PatientContactsPage() {
                   <div><span className="identity-eyebrow">PERSONNE DE CONFIANCE</span><h2>{person.full_name}</h2><p>{person.relationship} de {patient.full_name}</p></div>
                 </div>
                 <div className="identity-details">
-                  <div><span>Téléphone de la personne de confiance</span><strong>{person.phone || "Non renseigné"}</strong></div>
-                  <div><span>Email de la personne de confiance</span><strong>{person.email || "Non renseigné"}</strong></div>
+                  <div><span>Téléphone de la personne de confiance</span>{person.phone ? <a className="contact-link" href={phoneHref(person.phone)}>{person.phone}</a> : <strong>Non renseigné</strong>}</div>
+                  <div><span>Email de la personne de confiance</span>{person.email ? <a className="contact-link" href={`mailto:${person.email}`}>{person.email}</a> : <strong>Non renseigné</strong>}</div>
                   <div><span>Rôle</span><strong>{person.relationship}</strong></div>
                   <div><span>Contact d’urgence</span><strong>{person.is_emergency_contact ? "Oui" : "Non"}</strong></div>
                 </div>
