@@ -1,0 +1,40 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { completePatientHelp, submitDailyFeedback, submitPatientHelp } from "@/app/portal/patient-actions";
+import { ActionFeedback } from "@/components/action-feedback";
+
+const categories = [
+  { value: "room", icon: "⌂", label: "Ma chambre" },
+  { value: "meal", icon: "🍽", label: "Repas" },
+  { value: "planning", icon: "◷", label: "Planning" },
+  { value: "admin", icon: "▤", label: "Administratif" },
+] as const;
+
+export function PatientHelpCard() {
+  const [pending, startTransition] = useTransition();
+  const [selected, setSelected] = useState<(typeof categories)[number]["value"] | null>(null);
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<{ error?: string; success?: string }>({});
+
+  return <section className="patient-help-card">
+    <div className="patient-section-head"><div><span>Besoin d’aide ?</span><h2>Demander quelque chose sans chercher qui appeler</h2></div></div>
+    <div className="patient-help-options">{categories.map((item) => <button key={item.value} type="button" className={selected === item.value ? "active" : ""} onClick={() => setSelected(item.value)}><b>{item.icon}</b><span>{item.label}</span></button>)}</div>
+    {selected && <div className="patient-help-compose"><label className="field">Précision <span className="field-optional">(facultatif)</span><input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Expliquez en une phrase si nécessaire" /></label><button className="button button-primary" disabled={pending} onClick={() => startTransition(async () => { const response = await submitPatientHelp(selected, message); setResult(response); if (!response.error) { setSelected(null); setMessage(""); } })}>{pending ? "Envoi…" : "Envoyer ma demande"}</button></div>}
+    <ActionFeedback error={result.error} message={result.success} />
+    <small className="patient-help-note">Pour une urgence ou un besoin de soin immédiat, contactez directement l’équipe présente dans l’établissement.</small>
+  </section>;
+}
+
+export function PatientDailyFeedback({ currentMood }: { currentMood?: number | null }) {
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ error?: string; success?: string }>({});
+  const options = [{ mood: 1 as const, emoji: "😟", label: "Difficile" }, { mood: 2 as const, emoji: "😐", label: "Ça va" }, { mood: 3 as const, emoji: "🙂", label: "Bien" }];
+  return <section className="patient-feedback-card"><div><span className="section-kicker">Votre expérience</span><h2>Comment se passe votre journée ?</h2><p>Une réponse suffit. Ce retour concerne votre expérience de séjour, pas votre suivi médical.</p></div><div className="patient-feedback-actions">{options.map((option) => <button key={option.mood} disabled={pending} className={currentMood === option.mood ? "active" : ""} onClick={() => startTransition(async () => setResult(await submitDailyFeedback(option.mood, "")))}><span>{option.emoji}</span><small>{option.label}</small></button>)}</div><ActionFeedback error={result.error} message={result.success} /></section>;
+}
+
+export function CompletePatientHelpButton({ id }: { id: string }) {
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ error?: string; success?: string }>({});
+  return <div><button className="button button-primary button-small" disabled={pending} onClick={() => startTransition(async () => setResult(await completePatientHelp(id)))}>{pending ? "Enregistrement…" : "Traité"}</button><ActionFeedback error={result.error} message={result.success} /></div>;
+}
