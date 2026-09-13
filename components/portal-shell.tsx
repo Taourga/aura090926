@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
   { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
   { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical", "trusted_contact", "reception"] },
   { href: "/portal/visits", label: "Visites", icon: "♧", feature: "visits", roles: ["patient", "reception"] },
-  { href: "/portal/messages", label: "Messages", icon: "✉", feature: "messaging", roles: ["doctor", "nurse", "manager", "governance"] },
+  { href: "/portal/messages", label: "Messages", icon: "✉", feature: "messaging", roles: ["patient", "doctor", "nurse", "manager", "governance"] },
   { href: "/portal/menus", label: "Menus", icon: "≡", feature: "menus", hiddenFor: ["doctor", "trusted_contact", "reception"] },
   { href: "/portal/information", label: "Infos", icon: "i", feature: "information", hiddenFor: ["doctor", "trusted_contact"] },
   { href: "/portal/housekeeping", label: "Hôtellerie", icon: "◇", feature: "housekeeping", roles: ["governance", "technical", "admin"] },
@@ -61,7 +61,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const disabled = routeFeature && !featureEnabled(profile, routeFeature);
   const packLabel = profile.facility.countryPackCode === "AURA_FR" ? "FR" : profile.facility.countryPackCode === "AURA_DZ" ? "DZ" : "CORE";
   const isDemo = profile.facilityConfig.demo === true;
-  const showMessageBell = profile.role === "doctor" || profile.role === "nurse";
+  const showMessageBell = ["patient", "doctor", "nurse", "manager", "governance"].includes(profile.role);
   return <div className="portal">
     <aside className="sidebar"><Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand"><span className="brand-mark">A</span><span>AURA</span></Link><Navigation profile={profile} /><div className="sidebar-footer"><strong>{profile.facility.name}</strong><br />AURA {packLabel} · Accès sécurisé</div></aside>
     <div className="portal-main"><header className="portal-header"><div className="portal-context"><div className="role-chip">{roleLabels[profile.role]} · {packLabel}</div>{isDemo && <span className="demo-chip">Données fictives</span>}<FacilitySwitcher facilities={profile.facilities} /></div><div className="portal-header-actions">{showMessageBell && <MessageBell />}<div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div></div></header><main className="content">{disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p></div></section> : children}</main><Navigation profile={profile} mobile /></div>
