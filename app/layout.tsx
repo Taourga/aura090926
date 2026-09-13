@@ -7,6 +7,7 @@ import "./consent.css";
 import "./planning.css";
 import "./patient-experience.css";
 import "./operations.css";
+import "./final-demo-polish.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
@@ -14,9 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="fr">
-      <body>{children}</body>
-    </html>
-  );
+  return <html lang="fr"><body>{children}</body></html>;
 }
