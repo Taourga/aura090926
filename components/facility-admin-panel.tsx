@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { applyCountryPack, createFacility, inviteFacilityMember, updateFacilitySettings } from "@/app/portal/actions";
 import { ActionFeedback } from "@/components/action-feedback";
+import { invitePatient } from "@/app/portal/admin/patient-invitation";
 import type { AppRole, CountryPackCode, FacilityConfig, Profile } from "@/lib/types";
 import { roleLabels } from "@/lib/types";
 
@@ -66,6 +67,22 @@ export function FacilityAdminPanel({ profile }: { profile: Profile }) {
 
   return <>
     <ActionFeedback message={result.success} error={result.error} />
+    <section className="card" style={{ marginBottom: 18 }}>
+      <div className="card-header"><div><h2>Inviter un patient</h2><p className="card-subtitle">Envoyer un lien pour choisir son mot de passe et créer son séjour dans cet établissement.</p></div></div>
+      <div className="card-body"><form onSubmit={(event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        void run(() => invitePatient({ firstName: String(form.get("firstName")), lastName: String(form.get("lastName")), email: String(form.get("patientEmail")), entryDate: String(form.get("entryDate")) }));
+      }}>
+        <div className="form-grid">
+          <label className="field">Prénom<input name="firstName" autoComplete="given-name" maxLength={100} required /></label>
+          <label className="field">Nom<input name="lastName" autoComplete="family-name" maxLength={100} required /></label>
+          <label className="field">Email du patient<input name="patientEmail" type="email" autoComplete="email" maxLength={254} required /></label>
+          <label className="field">Date d’entrée<input name="entryDate" type="date" required /></label>
+        </div>
+        <button className="button button-primary" disabled={loading}>{loading ? "Traitement…" : "Envoyer l’invitation patient"}</button>
+      </form></div>
+    </section>
     <div className="metric-grid">
       <div className="metric"><span>Établissement</span><strong>{profile.facility.name}</strong><div className="metric-detail">{profile.facility.countryCode} · {profile.facility.timezone}</div></div>
       <div className="metric"><span>Country Pack</span><strong>{profile.facility.countryPackCode.replace("AURA_", "")}</strong><div className="metric-detail">{profile.facility.locale} · {profile.facility.currency}</div></div>
