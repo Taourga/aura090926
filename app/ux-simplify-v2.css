@@ -1,0 +1,77 @@
+/* AURA UX simplification v2 — loaded last on aurademo. */
+
+/* Patient home: one strong service card + two compact supporting cards. */
+.patient-cockpit-more-grid{
+  grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr)!important;
+  grid-template-areas:"help feedback" "help info";
+  align-items:stretch!important;
+  gap:12px!important;
+}
+.patient-cockpit-more-grid .patient-help-card{grid-area:help;display:flex!important;flex-direction:column;min-height:100%}
+.patient-cockpit-more-grid .patient-feedback-card{grid-area:feedback;min-height:0!important}
+.patient-cockpit-more-grid .patient-mini-info{grid-area:info;min-height:0!important}
+.patient-cockpit-more-grid .patient-section-head p{margin:5px 0 0;color:var(--aura-muted);font-size:13px;line-height:1.45}
+.patient-cockpit-more-grid .patient-help-options{margin-top:2px}
+.patient-cockpit-more-grid .patient-help-options button{min-height:82px!important}
+.patient-cockpit-more-grid .patient-help-compose{margin-top:14px}
+.patient-cockpit-more-grid .patient-help-note{margin-top:auto!important;padding-top:14px}
+.patient-cockpit-more-grid .patient-feedback-card p{font-size:13px!important;line-height:1.45!important}
+.patient-cockpit-more-grid .patient-mini-info strong{font-size:15px}
+
+/* Patient planning already has Today/Tomorrow + next event. Remove duplicated KPI row. */
+.planning-summary.compact-metrics{display:none!important}
+.planning-preview-grid{margin-bottom:10px!important}
+.planning-quick-actions{margin:0 0 14px!important}
+.planning-quick-actions a{transition:background .15s ease,border-color .15s ease,color .15s ease}
+.planning-quick-actions a:hover{background:#eef8f7;border-color:#bcd9d8;color:#0b6f75}
+
+/* Permission page: guidance should support the calendar, not compete with it. */
+.permission-hero--after-calendar{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:10px 0 14px!important}
+.permission-hero--after-calendar>div{padding:9px 10px!important;border-radius:12px!important;background:#f8fbfb!important}
+.permission-hero--after-calendar .permission-step{width:24px;height:24px;font-size:12px}
+.permission-hero--after-calendar strong{font-size:13px}
+.permission-hero--after-calendar small{font-size:11px;line-height:1.35}
+
+/* Operational screens: reduce visual noise, preserve action hierarchy. */
+.reception-fastqueue,.doctor-simple-header,.role-hero,.pulse-card,.work-card{box-shadow:0 4px 16px rgba(21,44,57,.04)!important}
+.card-header{padding-top:14px!important;padding-bottom:14px!important}
+.card-body{padding-top:15px!important;padding-bottom:15px!important}
+.section-kicker{letter-spacing:.075em}
+
+/* Tables: keep actions readable and avoid crushed labels. */
+.data-table td,.data-table th{white-space:normal}
+.data-table td:last-child{min-width:118px}
+.data-table .button{white-space:nowrap}
+
+/* Forms: primary action visually clear, supporting text quieter. */
+.form-help,.row-meta,.card-subtitle{line-height:1.45}
+.field{min-width:0}
+.field input,.field select,.field textarea{max-width:100%}
+
+/* Sidebar: make scanning easier on long staff menus. */
+.sidebar .nav a{font-size:13.5px!important;padding-top:9px!important;padding-bottom:9px!important}
+.sidebar .nav-label{line-height:1.2}
+
+@media(max-width:1180px){
+  .patient-cockpit-more-grid{grid-template-columns:1fr 1fr!important;grid-template-areas:"help help" "feedback info"}
+  .patient-cockpit-more-grid .patient-help-card{min-height:auto}
+}
+
+@media(max-width:900px){
+  .patient-cockpit-more-grid{grid-template-columns:1fr!important;grid-template-areas:"help" "feedback" "info"}
+  .permission-hero--after-calendar{grid-template-columns:1fr!important}
+}
+
+@media(max-width:640px){
+  .patient-cockpit-more{padding-left:10px!important;padding-right:10px!important}
+  .patient-cockpit-more-grid .patient-help-card,.patient-cockpit-more-grid .patient-feedback-card,.patient-cockpit-more-grid .patient-mini-info{padding:13px!important}
+  .patient-cockpit-more-grid .patient-help-options{grid-template-columns:1fr 1fr!important}
+  .patient-cockpit-more-grid .patient-help-options button{min-height:68px!important}
+  .planning-quick-actions{display:grid!important;grid-template-columns:1fr 1fr}
+  .planning-quick-actions a{text-align:center}
+}
+
+@media(max-width:430px){
+  .patient-cockpit-more-grid .patient-help-options{grid-template-columns:1fr!important}
+  .planning-quick-actions{grid-template-columns:1fr}
+}
