@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./aura-polish.css";
 import "./aurademo.css";
+import "./aurademo-actions.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
