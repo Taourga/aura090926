@@ -21,7 +21,8 @@ type PortalData = {
 };
 
 const presenceLabel = (value?: string | null) => value === "out" ? "Sorti temporairement" : value === "appointment" ? "En rendez-vous" : "Présent dans l’établissement";
-const mealLabel = (value: string) => ({ breakfast: "Petit-déjeuner", lunch: "Déjeuner", dinner: "Dîner" }[value] || value);
+const mealLabels: Record<string, string> = { breakfast: "Petit-déjeuner", lunch: "Déjeuner", dinner: "Dîner" };
+const mealLabel = (value: string) => mealLabels[value] || value;
 
 export default async function TrustedContactPage() {
   const profile = await requireProfile();
@@ -29,7 +30,7 @@ export default async function TrustedContactPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("trusted_contact_portal");
   if (error || !data) return <PortalShell profile={profile}><section className="card"><div className="card-body"><h1>Mon proche</h1><p role="alert">L’accès n’est pas disponible. Le patient ou l’établissement peut vérifier l’autorisation de partage.</p></div></section></PortalShell>;
-  const portal = data as PortalData;
+  const portal = data as unknown as PortalData;
   const dt = (value: string | null | undefined) => value ? formatDateTime(value, profile.facility.locale, profile.facility.timezone) : "Non renseignée";
 
   return <PortalShell profile={profile}>
