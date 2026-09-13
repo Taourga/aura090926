@@ -2,132 +2,59 @@ import Link from "next/link";
 import { MovementActions, PermissionDecisionActions } from "@/components/permission-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { DoctorRoundForm, ExternalAppointmentForm } from "@/components/doctor-schedule-tools";
+import { StaffMessageBar } from "@/components/staff-message-bar";
 import { formatDateTime, formatTime } from "@/lib/format";
 import type { AppRole, PermissionStatus } from "@/lib/types";
 
 type Person = { full_name: string; phone?: string | null };
 type Relation<T> = T | T[] | null;
-
-export type StaffPermission = {
-  id: string;
-  departure_at: string;
-  return_at: string;
-  status: string;
-  doctor_decision: string | null;
-  manager_decision: string | null;
-  departed_at: string | null;
-  returned_at: string | null;
-  reason: string | null;
-  patient: Relation<Person>;
-};
-
-export type StaffStay = {
-  id: string;
-  presence: string;
-  room_number: string | null;
-  ward: Relation<{ name: string; floor: string | null }>;
-  patient: Relation<Person>;
-};
-
-export type StaffAppointment = {
-  id: string;
-  title: string;
-  starts_at: string;
-  location: string | null;
-  patient: Relation<Person>;
-};
-
+export type StaffPermission = { id: string; departure_at: string; return_at: string; status: string; doctor_decision: string | null; manager_decision: string | null; departed_at: string | null; returned_at: string | null; reason: string | null; patient: Relation<Person> };
+export type StaffStay = { id: string; presence: string; room_number: string | null; ward: Relation<{ name: string; floor: string | null }>; patient: Relation<Person> };
+export type StaffAppointment = { id: string; title: string; starts_at: string; location: string | null; patient: Relation<Person> };
 export type DoctorRound = { id: string; floor_number: number; scheduled_at: string };
 export type DoctorScheduleBlock = { id: string; starts_at: string; ends_at: string };
 export type OperationalRole = Extract<AppRole, "doctor" | "manager" | "nurse" | "reception">;
 
 function one<T>(value: Relation<T>) { return Array.isArray(value) ? value[0] : value; }
-function PatientIdentity({ patient, detail }: { patient: Relation<Person>; detail?: string }) {
-  const item = one(patient);
-  const initials = (item?.full_name || "P").split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-  return <div className="patient-identity"><span className="patient-avatar" aria-hidden="true">{initials}</span><span><strong>{item?.full_name || "Patient"}</strong>{detail && <small>{detail}</small>}</span></div>;
-}
+function PatientIdentity({ patient, detail }: { patient: Relation<Person>; detail?: string }) { const item=one(patient); const initials=(item?.full_name||"P").split(" ").filter(Boolean).slice(0,2).map(p=>p[0]).join("").toUpperCase(); return <div className="patient-identity"><span className="patient-avatar">{initials}</span><span><strong>{item?.full_name||"Patient"}</strong>{detail&&<small>{detail}</small>}</span></div>; }
 function PermissionMeta({ permission }: { permission: StaffPermission }) { return <div className="queue-meta"><span>Départ · {formatDateTime(permission.departure_at)}</span><span>Retour · {formatDateTime(permission.return_at)}</span></div>; }
-function EmptyQueue({ children }: { children: React.ReactNode }) { return <div className="queue-empty"><span aria-hidden="true">✓</span>{children}</div>; }
-function floorLabel(floor: number) { return floor === 0 ? "RDC" : floor === 1 ? "1er étage" : `${floor}e étage`; }
+function EmptyQueue({ children }: { children: React.ReactNode }) { return <div className="queue-empty"><span>✓</span>{children}</div>; }
+function floorLabel(floor:number){return floor===0?"RDC":floor===1?"1er étage":`${floor}e étage`;}
 
-export function StaffDashboard({ role, firstName, permissions, stays, appointments, doctorRounds = [], externalAppointments = [] }: {
-  role: OperationalRole;
-  firstName: string;
-  permissions: StaffPermission[];
-  stays: StaffStay[];
-  appointments: StaffAppointment[];
-  doctorRounds?: DoctorRound[];
-  externalAppointments?: DoctorScheduleBlock[];
-}) {
-  const activeStays = stays || [];
-  const presentStays = activeStays.filter((stay) => stay.presence === "present");
-  const outStays = activeStays.filter((stay) => stay.presence === "out");
-  const activePermissions = (permissions || []).filter((item) => ["waiting", "submitted", "approved", "departed"].includes(item.status));
-  const medicalQueue = activePermissions.filter((item) => !item.doctor_decision && ["waiting", "submitted"].includes(item.status));
-  const managerQueue = activePermissions.filter((item) => !item.manager_decision && ["waiting", "submitted"].includes(item.status));
-  const departureQueue = activePermissions.filter((item) => item.status === "approved");
-  const returnQueue = activePermissions.filter((item) => item.status === "departed");
-  const lateReturns = returnQueue.filter((item) => new Date(item.return_at).getTime() < Date.now());
-  const approvedCount = activePermissions.filter((item) => ["approved", "departed"].includes(item.status)).length;
-  const floorTotals = presentStays.reduce<Record<string, number>>((totals, stay) => {
-    const ward = one(stay.ward);
-    const label = ward?.floor || ward?.name || "Unité non renseignée";
-    totals[label] = (totals[label] || 0) + 1;
-    return totals;
-  }, {});
-
-  const content = {
-    doctor: { eyebrow: "Espace médical", title: "Ce qui demande votre décision est placé en premier.", subtitle: "Validez, consultez le prochain patient et publiez votre tournée sans chercher dans plusieurs écrans.", action: { href: "/portal/patients", label: "Mes patients" }, metrics: [[medicalQueue.length,"À valider","Permissions"],[appointments.length,"RDV à venir","Planning"],[doctorRounds.length,"Passages publiés","Étages"],[externalAppointments.length,"RDV externes","Créneaux privés"]] },
-    manager: { eyebrow: "Pilotage d’unité", title: "Les exceptions avant le reste.", subtitle: "AURA remonte les décisions, retards et mouvements qui nécessitent réellement votre attention.", action: { href: "/portal/pulse", label: "Ouvrir Pulse" }, metrics: [[managerQueue.length,"Décisions cadre","À traiter"],[lateReturns.length,"Retours en retard","Attention"],[outStays.length,"Patients sortis","En cours"],[presentStays.length,"Patients présents","Maintenant"]] },
-    nurse: { eyebrow: "Tour de service", title: "Votre service en une lecture.", subtitle: "Présences, sorties, rendez-vous et fins d’hospitalisation restent accessibles sans multiplier les écrans.", action: { href: "/portal/discharges", label: "Préparer les sorties" }, metrics: [[presentStays.length,"Patients présents","Maintenant"],[outStays.length,"Hors service","À suivre"],[appointments.length,"RDV à venir","À anticiper"],[activePermissions.length,"Permissions actives","À surveiller"]] },
-    reception: { eyebrow: "Accueil & mouvements", title: "La file unique ci-dessus est votre poste de travail.", subtitle: "Cette vue garde seulement les repères de présence et d’occupation ; les actions sont centralisées dans À traiter à l’accueil.", action: { href: "/portal/handoff", label: "Voir la relève" }, metrics: [[departureQueue.length,"Départs","À enregistrer"],[returnQueue.length,"Retours","À enregistrer"],[presentStays.length,"Présents","Dans la clinique"],[Object.keys(floorTotals).length,"Étages","Occupés"]] },
+export function StaffDashboard({ role, firstName, permissions, stays, appointments, doctorRounds = [], externalAppointments = [] }: { role: OperationalRole; firstName: string; permissions: StaffPermission[]; stays: StaffStay[]; appointments: StaffAppointment[]; doctorRounds?: DoctorRound[]; externalAppointments?: DoctorScheduleBlock[] }) {
+  const activeStays=stays||[]; const presentStays=activeStays.filter(s=>s.presence==="present"); const outStays=activeStays.filter(s=>s.presence==="out");
+  const activePermissions=(permissions||[]).filter(i=>["waiting","submitted","approved","departed"].includes(i.status));
+  const medicalQueue=activePermissions.filter(i=>!i.doctor_decision&&["waiting","submitted"].includes(i.status)); const managerQueue=activePermissions.filter(i=>!i.manager_decision&&["waiting","submitted"].includes(i.status));
+  const departureQueue=activePermissions.filter(i=>i.status==="approved"); const returnQueue=activePermissions.filter(i=>i.status==="departed"); const lateReturns=returnQueue.filter(i=>new Date(i.return_at).getTime()<Date.now()); const approvedCount=activePermissions.filter(i=>["approved","departed"].includes(i.status)).length;
+  const floorTotals=presentStays.reduce<Record<string,number>>((totals,stay)=>{const ward=one(stay.ward);const label=ward?.floor||ward?.name||"Unité";totals[label]=(totals[label]||0)+1;return totals;},{});
+  const content={
+    doctor:{eyebrow:"Espace médical",title:"Vos décisions d’abord, le reste ensuite.",subtitle:"Validez, voyez le prochain patient et préparez votre tournée sans chercher.",action:{href:"/portal/patients",label:"Mes patients"},metrics:[[medicalQueue.length,"À valider","Permissions"],[appointments.length,"RDV à venir","Planning"],[doctorRounds.length,"Passages","Tournée"]]},
+    manager:{eyebrow:"Pilotage d’unité",title:"Les exceptions avant le reste.",subtitle:"Décisions, retards et mouvements qui nécessitent réellement votre attention.",action:{href:"/portal/pulse",label:"Ouvrir Pulse"},metrics:[[managerQueue.length,"À décider","Permissions"],[lateReturns.length,"Retards","Retours"],[outStays.length,"Patients sortis","En cours"]]},
+    nurse:{eyebrow:"Tour de service",title:"Votre service en une lecture.",subtitle:"Présences, mouvements, rendez-vous, sorties et relève sans multiplier les écrans.",action:{href:"/portal/handoff",label:"Relève infirmière"},metrics:[[presentStays.length,"Présents","Maintenant"],[outStays.length,"Hors service","À suivre"],[appointments.length,"RDV","À anticiper"]]},
+    reception:{eyebrow:"Accueil & mouvements",title:"Traiter ce qui arrive, dans l’ordre.",subtitle:"La file unique au-dessus est votre poste de travail. Ici, seulement les repères.",action:{href:"/portal/pulse",label:"Ouvrir Pulse"},metrics:[[departureQueue.length,"Départs","À enregistrer"],[returnQueue.length,"Retours","À enregistrer"],[presentStays.length,"Présents","Occupation"]]},
   }[role];
-
-  const focus = role === "doctor" ? [
-    { value: medicalQueue.length, label: "permissions à décider", href: "/portal/permissions" },
-    { value: appointments.length ? formatTime(appointments[0].starts_at) : "—", label: appointments.length ? `prochain RDV · ${one(appointments[0].patient)?.full_name || "Patient"}` : "aucun RDV à venir", href: "/portal/appointments" },
-    { value: doctorRounds.length, label: "passages d’étage publiés", href: "/portal/appointments" },
-  ] : role === "manager" ? [
-    { value: managerQueue.length, label: "validations à arbitrer", href: "/portal/permissions" },
-    { value: lateReturns.length, label: "retours en retard", href: "/portal/pulse" },
-    { value: outStays.length, label: "patients actuellement sortis", href: "/portal/pulse" },
-  ] : role === "nurse" ? [
-    { value: outStays.length, label: "patients hors service", href: "/portal/permissions" },
-    { value: appointments.length, label: "rendez-vous à anticiper", href: "/portal/appointments" },
-    { value: activePermissions.length, label: "permissions à surveiller", href: "/portal/permissions" },
-  ] : [
-    { value: departureQueue.length, label: "départs à enregistrer", href: "/portal/permissions" },
-    { value: returnQueue.length, label: "retours à enregistrer", href: "/portal/permissions" },
-    { value: lateReturns.length, label: "retours en retard", href: "/portal/pulse" },
-  ];
+  const focus=role==="doctor"?[
+    {value:medicalQueue.length,label:"permissions à décider",href:"/portal/permissions"},
+    {value:appointments.length?formatTime(appointments[0].starts_at):"—",label:appointments.length?`prochain RDV · ${one(appointments[0].patient)?.full_name||"Patient"}`:"aucun RDV",href:"/portal/appointments"},
+    {value:doctorRounds.length,label:"passages d’étage",href:"/portal/appointments"},
+  ]:role==="manager"?[
+    {value:managerQueue.length,label:"validations à arbitrer",href:"/portal/permissions"},{value:lateReturns.length,label:"retours en retard",href:"/portal/pulse"},{value:outStays.length,label:"patients sortis",href:"/portal/pulse"},
+  ]:role==="nurse"?[
+    {value:outStays.length,label:"patients hors service",href:"/portal/permissions"},{value:appointments.length,label:"rendez-vous à anticiper",href:"/portal/appointments"},{value:activePermissions.length,label:"permissions actives",href:"/portal/permissions"},
+  ]:[{value:departureQueue.length,label:"départs à enregistrer",href:"/portal/permissions"},{value:returnQueue.length,label:"retours à enregistrer",href:"/portal/permissions"},{value:lateReturns.length,label:"retours en retard",href:"/portal/pulse"}];
 
   return <div className={`role-dashboard role-dashboard--${role}`}>
     <section className="role-hero"><div><p className="role-eyebrow">{content.eyebrow}</p><h1>Bonjour, {firstName}.</h1><p>{content.title}</p><span>{content.subtitle}</span></div><Link className="button button-primary" href={content.action.href}>{content.action.label}</Link></section>
+    {(role==="doctor"||role==="nurse")&&<StaffMessageBar/>}
+    <section className="staff-focus"><div className="staff-focus-head"><div><p className="section-kicker">À faire maintenant</p><h2>3 repères utiles</h2></div>{role==="nurse"&&<Link href="/portal/handoff">Relève →</Link>}</div><div className="staff-focus-grid">{focus.map(item=><Link href={item.href} key={item.label}><strong>{item.value}</strong><span>{item.label}</span><small>Ouvrir →</small></Link>)}</div></section>
+    <div className="staff-metric-grid staff-metric-grid--compact">{content.metrics.map(([value,title,detail])=><article className="staff-metric" key={title}><strong>{value}</strong><span>{title}</span><small>{detail}</small></article>)}</div>
 
-    <section className="staff-focus"><div className="staff-focus-head"><div><p className="section-kicker">À faire maintenant</p><h2>Les 3 repères utiles</h2></div><Link href="/portal/handoff">Relève complète →</Link></div><div className="staff-focus-grid">{focus.map((item) => <Link href={item.href} key={item.label}><strong>{item.value}</strong><span>{item.label}</span><small>Ouvrir →</small></Link>)}</div></section>
+    {role==="doctor"&&<div className="role-work-grid role-work-grid--doctor"><section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">Décisions</p><h2>Permissions en attente</h2></div><span className="count-pill">{medicalQueue.length}</span></div><div className="work-card-body">{medicalQueue.length?medicalQueue.slice(0,5).map(p=><div className="queue-row" key={p.id}><PatientIdentity patient={p.patient} detail={p.reason||"Motif non renseigné"}/><PermissionMeta permission={p}/><PermissionDecisionActions permissionId={p.id}/></div>):<EmptyQueue>Aucune permission à décider.</EmptyQueue>}</div></section><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Planning</p><h2>Prochains patients</h2></div><Link href="/portal/appointments" className="text-link">Planning →</Link></div><div className="work-card-body">{appointments.length?appointments.slice(0,5).map(a=><div className="timeline-row" key={a.id}><time>{formatTime(a.starts_at)}</time><PatientIdentity patient={a.patient} detail={`${a.title} · ${a.location||"Lieu à confirmer"}`}/></div>):<EmptyQueue>Aucun rendez-vous.</EmptyQueue>}</div></section><section className="work-card role-work-grid--full doctor-round-card"><div className="work-card-head"><div><p className="section-kicker">Tournée</p><h2>Passages par étage</h2></div></div><div className="doctor-round-content"><DoctorRoundForm/><div className="doctor-round-list">{doctorRounds.length?doctorRounds.map(r=><div className="doctor-round-item" key={r.id}><span>{floorLabel(r.floor_number)}</span><strong>{formatDateTime(r.scheduled_at)}</strong><small>Visible par les patients</small></div>):<EmptyQueue>Aucun passage publié.</EmptyQueue>}</div></div></section><details className="work-card role-work-grid--full"><summary>Ajouter un créneau externe</summary><div className="work-card-body"><ExternalAppointmentForm/></div></details></div>}
 
-    <div className="staff-metric-grid">{content.metrics.map(([value, title, detail]) => <article className="staff-metric" key={title}><strong>{value}</strong><span>{title}</span><small>{detail}</small></article>)}</div>
+    {role==="manager"&&<div className="role-work-grid role-work-grid--manager"><section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">Décisions cadre</p><h2>À arbitrer</h2></div><span className="count-pill">{managerQueue.length}</span></div><div className="work-card-body">{managerQueue.length?managerQueue.slice(0,6).map(p=><div className="queue-row" key={p.id}><PatientIdentity patient={p.patient} detail={p.reason||"Motif non renseigné"}/><PermissionMeta permission={p}/><PermissionDecisionActions permissionId={p.id}/></div>):<EmptyQueue>Aucune validation en attente.</EmptyQueue>}</div></section><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Exceptions</p><h2>Présence & mouvements</h2></div><Link href="/portal/pulse" className="text-link">Pulse →</Link></div><div className="work-card-body"><div className="movement-summary"><span>Sortis</span><strong>{outStays.length}</strong><span>Permissions actives</span><strong>{approvedCount}</strong></div><div className="unit-grid">{Object.entries(floorTotals).map(([floor,total])=><div className="unit-tile" key={floor}><span>{floor}</span><strong>{total}</strong><small>présents</small></div>)}</div></div></section></div>}
 
-    {role === "doctor" && <div className="role-work-grid role-work-grid--doctor">
-      <section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">Permissions</p><h2>Validations en attente</h2></div><span className="count-pill">{medicalQueue.length}</span></div><div className="work-card-body">{medicalQueue.length ? medicalQueue.map((permission) => <div className="queue-row" key={permission.id}><PatientIdentity patient={permission.patient} detail={permission.reason || "Motif non renseigné"} /><PermissionMeta permission={permission} /><div className="queue-action"><PermissionDecisionActions permissionId={permission.id} /></div></div>) : <EmptyQueue>Aucune permission en attente de validation.</EmptyQueue>}</div></section>
-      <section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Planning</p><h2>Rendez-vous à venir</h2></div><Link href="/portal/appointments" className="text-link">Planning complet</Link></div><div className="work-card-body">{appointments.length || externalAppointments.length ? <div>{appointments.map((appointment) => <div className="timeline-row" key={appointment.id}><time>{formatTime(appointment.starts_at)}</time><PatientIdentity patient={appointment.patient} detail={`${appointment.title} · ${appointment.location || "Lieu à confirmer"}`} /></div>)}{externalAppointments.map((appointment) => <div className="timeline-row timeline-row--external" key={appointment.id}><time>{formatDateTime(appointment.starts_at)}</time><div><strong>RDV externe</strong><small>Créneau réservé · aucun détail affiché</small></div></div>)}</div> : <EmptyQueue>Aucun rendez-vous à venir.</EmptyQueue>}</div></section>
-      <section className="work-card role-work-grid--full doctor-round-card"><div className="work-card-head"><div><p className="section-kicker">Tournée par étage</p><h2>Informer les patients de votre passage</h2></div></div><div className="doctor-round-content"><DoctorRoundForm /><div className="doctor-round-list">{doctorRounds.length ? doctorRounds.map((round) => <div className="doctor-round-item" key={round.id}><span>{floorLabel(round.floor_number)}</span><strong>{formatDateTime(round.scheduled_at)}</strong><small>Visible par les patients de cet étage</small></div>) : <div className="queue-empty"><span aria-hidden="true">i</span>Aucun passage publié pour le moment.</div>}</div></div></section>
-      <section className="work-card role-work-grid--full external-slot-card"><div className="work-card-head"><div><p className="section-kicker">Créneau privé</p><h2>Ajouter un RDV externe</h2></div></div><div className="work-card-body"><p className="card-subtitle external-slot-copy">Ce créneau n&apos;affiche ni patient, ni motif, ni détail dans le planning.</p><ExternalAppointmentForm /></div></section>
-    </div>}
+    {role==="nurse"&&<div className="role-work-grid role-work-grid--nurse"><section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">À surveiller</p><h2>Patients hors service</h2></div><span className="count-pill">{outStays.length}</span></div><div className="work-card-body">{outStays.length?outStays.slice(0,6).map(stay=>{const ward=one(stay.ward);return <div className="care-row" key={stay.id}><PatientIdentity patient={stay.patient} detail={`${ward?.name||"Unité"} · chambre ${stay.room_number||"—"}`}/><span className="presence-pill presence-pill--out">Sorti</span></div>}):<EmptyQueue>Aucun patient hors service.</EmptyQueue>}</div></section><div className="stack"><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Planning</p><h2>Prochains rendez-vous</h2></div></div><div className="work-card-body">{appointments.length?appointments.slice(0,4).map(a=><div className="timeline-row" key={a.id}><time>{formatTime(a.starts_at)}</time><PatientIdentity patient={a.patient} detail={a.title}/></div>):<EmptyQueue>Aucun rendez-vous.</EmptyQueue>}</div></section><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Mouvements</p><h2>Permissions actives</h2></div><Link href="/portal/permissions" className="text-link">Voir →</Link></div><div className="work-card-body">{activePermissions.slice(0,4).map(p=><div className="compact-row" key={p.id}><PatientIdentity patient={p.patient} detail={`Départ ${formatDateTime(p.departure_at)}`}/><StatusBadge status={p.status as PermissionStatus}/></div>)}</div></section></div></div>}
 
-    {role === "manager" && <div className="role-work-grid role-work-grid--manager">
-      <section className="work-card work-card--priority"><div className="work-card-head"><div><p className="section-kicker">Décisions cadre</p><h2>Validations à arbitrer</h2></div><span className="count-pill">{managerQueue.length}</span></div><div className="work-card-body">{managerQueue.length ? managerQueue.map((permission) => <div className="queue-row" key={permission.id}><PatientIdentity patient={permission.patient} detail={permission.reason || "Motif non renseigné"} /><PermissionMeta permission={permission} /><div className="queue-action"><PermissionDecisionActions permissionId={permission.id} /></div></div>) : <EmptyQueue>Aucune validation cadre en attente.</EmptyQueue>}</div></section>
-      <section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Occupation</p><h2>Présence par étage</h2></div></div><div className="work-card-body"><div className="unit-grid">{Object.entries(floorTotals).length ? Object.entries(floorTotals).map(([floor, total]) => <div className="unit-tile" key={floor}><span>{floor}</span><strong>{total}</strong><small>patient{total > 1 ? "s" : ""} présent{total > 1 ? "s" : ""}</small></div>) : <EmptyQueue>Aucune présence enregistrée.</EmptyQueue>}</div><div className="movement-summary"><span>Sorties à suivre</span><strong>{outStays.length}</strong><span>Permission{approvedCount > 1 ? "s" : ""} autorisée{approvedCount > 1 ? "s" : ""}</span><strong>{approvedCount}</strong></div></div></section>
-    </div>}
-
-    {role === "nurse" && <div className="role-work-grid role-work-grid--nurse">
-      <section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Patients de l’unité</p><h2>Suivi de présence</h2></div><span className="count-pill">{activeStays.length}</span></div><div className="work-card-body">{activeStays.length ? activeStays.map((stay) => { const ward = one(stay.ward); const patient = one(stay.patient); return <div className="care-row" key={stay.id}><PatientIdentity patient={stay.patient} detail={`${ward?.name || "Unité"} · Chambre ${stay.room_number || "—"}`} /><div className="care-contact">{patient?.phone || "Coordonnées non renseignées"}</div><span className={`presence-pill ${stay.presence === "present" ? "presence-pill--present" : "presence-pill--out"}`}>{stay.presence === "present" ? "Présent" : "Sorti"}</span></div>; }) : <EmptyQueue>Aucun séjour actif dans votre périmètre.</EmptyQueue>}</div></section>
-      <div className="stack"><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Mouvements</p><h2>À surveiller</h2></div></div><div className="work-card-body">{activePermissions.length ? activePermissions.slice(0, 4).map((permission) => <div className="compact-row" key={permission.id}><PatientIdentity patient={permission.patient} detail={`Départ ${formatDateTime(permission.departure_at)}`} /><StatusBadge status={permission.status as PermissionStatus} /></div>) : <EmptyQueue>Aucun mouvement en cours.</EmptyQueue>}</div></section><section className="work-card"><div className="work-card-head"><div><p className="section-kicker">Planning</p><h2>Prochains rendez-vous</h2></div></div><div className="work-card-body">{appointments.length ? appointments.slice(0, 3).map((appointment) => <div className="timeline-row" key={appointment.id}><time>{formatTime(appointment.starts_at)}</time><PatientIdentity patient={appointment.patient} detail={appointment.title} /></div>) : <EmptyQueue>Aucun rendez-vous à venir.</EmptyQueue>}</div></section></div>
-    </div>}
-
-    {role === "reception" && <div className="role-work-grid role-work-grid--reception">
-      <section className="work-card role-work-grid--full"><div className="work-card-head"><div><p className="section-kicker">Occupation en direct</p><h2>Patients présents par étage</h2></div><span className="live-indicator"><i />Mise à jour à l’ouverture</span></div><div className="work-card-body"><div className="unit-grid">{Object.entries(floorTotals).length ? Object.entries(floorTotals).map(([floor, total]) => <div className="unit-tile" key={floor}><span>{floor}</span><strong>{total}</strong><small>patients présents</small></div>) : <EmptyQueue>Aucun patient présent.</EmptyQueue>}</div></div></section>
-    </div>}
+    {role==="reception"&&<details className="reception-secondary"><summary>Voir le détail des mouvements</summary><div className="role-work-grid role-work-grid--reception"><section className="work-card"><div className="work-card-head"><h2>Départs</h2><span className="count-pill">{departureQueue.length}</span></div><div className="work-card-body">{departureQueue.map(p=><div className="queue-row" key={p.id}><PatientIdentity patient={p.patient} detail={formatDateTime(p.departure_at)}/><MovementActions permissionId={p.id} action="depart"/></div>)}</div></section><section className="work-card"><div className="work-card-head"><h2>Retours</h2><span className="count-pill">{returnQueue.length}</span></div><div className="work-card-body">{returnQueue.map(p=><div className="queue-row" key={p.id}><PatientIdentity patient={p.patient} detail={formatDateTime(p.return_at)}/><MovementActions permissionId={p.id} action="return"/></div>)}</div></section></div></details>}
   </div>;
 }
