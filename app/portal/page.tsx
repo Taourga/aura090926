@@ -19,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
   const profile = await requireProfile();
+  if (profile.role === "trusted_contact") redirect("/portal/proche");
   if ((profile.role === "governance" || profile.role === "technical") && facilityFeatureEnabled(profile, "housekeeping")) redirect("/portal/housekeeping");
   const supabase = await createClient();
   const displayDateTime = (value: string | null | undefined) => formatDateTime(value, profile.facility.locale, profile.facility.timezone);
