@@ -41,17 +41,17 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages, is
     const body = String(data.get("body") || "");
     const priority = isPatient ? 1 : Number(data.get("priority") || 1);
     if (!recipientId) return;
-    setSelectedId(recipientId); setLoading(true); setFeedback({});
+    setLoading(true); setFeedback({});
     const result = await sendClinicalMessage(recipientId, body, priority);
     setFeedback(result); setLoading(false); if (result.success) { form.reset(); router.refresh(); }
   }
 
   return <section className="messenger card">
     <aside className="messenger-contacts" aria-label="Contacts">
-      <div className="messenger-title"><strong>{isPatient ? "Équipe soignante" : "Contacts"}</strong><span>{contacts.length}</span></div>
+      <div className="messenger-title"><strong>{isPatient ? "Mon équipe" : "Conversations"}</strong><span>{contacts.length}</span></div>
       {contacts.map((contact) => {
         const unread = initialMessages.filter((message) => message.sender_id === contact.id && !message.read_at).length;
-        return <button type="button" key={contact.id} onClick={() => selectContact(contact.id)} className={selectedId === contact.id ? "messenger-contact active" : "messenger-contact"}>
+        return <button type="button" key={contact.id} onClick={() => selectContact(contact.id)} className={selectedId === contact.id ? "messenger-contact active" : "messenger-contact"} aria-pressed={selectedId === contact.id}>
           <span className="avatar" aria-hidden="true">{contact.full_name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
           <span><strong>{contact.full_name}</strong><small>{roleLabel[contact.role]}</small></span>{unread > 0 && <b>{unread}</b>}
         </button>;
@@ -60,25 +60,23 @@ export function ClinicalMessenger({ currentUserId, contacts, initialMessages, is
     </aside>
 
     <div className="messenger-thread">
-      <div className="messenger-thread-head"><div><strong>{selected?.full_name || "Nouveau message"}</strong>{selected && <small>{roleLabel[selected.role]}</small>}</div><span className="demo-chip">Accusé de lecture actif</span></div>
+      <div className="messenger-thread-head"><div><strong>{selected?.full_name || "Choisissez une conversation"}</strong>{selected && <small>{roleLabel[selected.role]}</small>}</div>{selected && <span className="demo-chip">Lecture suivie</span>}</div>
       <div className="message-list" aria-live="polite">
         {messages.length ? messages.map((message) => <div key={message.id} className={`${message.sender_id === currentUserId ? "message-bubble own" : "message-bubble"} priority-${message.priority}`}>
-          {!isPatient && <div className="message-priority">Niveau {message.priority} · {priorityLabel[message.priority] || "Normal"}</div>}
+          {!isPatient && message.priority > 1 && <div className="message-priority">{priorityLabel[message.priority] || "Important"}</div>}
           <p>{message.body}</p>
           <time>{new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(message.created_at))}
             {message.sender_id === currentUserId ? message.read_at ? ` · ✓✓ Lu ${new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.read_at))}` : " · ✓ Envoyé" : ""}
           </time>
-        </div>) : <p className="empty">Choisissez un destinataire et commencez l’échange.</p>}
+        </div>) : <p className="empty">{selected ? "Aucun message pour le moment. Écrivez le premier message ci-dessous." : "Choisissez une conversation dans la liste."}</p>}
       </div>
 
       <form className="message-form" onSubmit={submit}>
         <ActionFeedback message={feedback.success} error={feedback.error} />
-        <div className="message-compose-grid">
-          <label className="field">Destinataire<select name="recipient" value={selectedId} onChange={(e) => selectContact(e.target.value)} required><option value="">Choisir un destinataire</option>{contacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.full_name} · {roleLabel[contact.role]}</option>)}</select></label>
-          {!isPatient && <label className="field">Importance<select name="priority" defaultValue="1"><option value="1">1 · Normal</option><option value="2">2 · Important</option><option value="3">3 · Critique</option></select></label>}
-        </div>
-        <label className="field">Message<textarea name="body" required maxLength={2000} rows={3} placeholder={isPatient ? "Écrire à votre équipe soignante…" : "Écrire un message…"} /></label>
-        {isPatient && <p className="card-subtitle">Pour une urgence médicale, utilisez le dispositif d’appel prévu par l’établissement.</p>}
+        <input type="hidden" name="recipient" value={selectedId} />
+        {!isPatient && <div className="message-priority-select"><label className="field">Importance<select name="priority" defaultValue="1"><option value="1">Normal</option><option value="2">Important</option><option value="3">Critique</option></select></label></div>}
+        <label className="field">Message<textarea name="body" required maxLength={2000} rows={3} placeholder={selected ? `Écrire à ${selected.full_name}…` : "Choisissez d’abord une conversation"} disabled={!selectedId} /></label>
+        {isPatient && <p className="card-subtitle">Urgence médicale : utilisez le dispositif d’appel prévu par l’établissement.</p>}
         <button className="button button-primary" disabled={loading || !selectedId}>{loading ? "Envoi…" : "Envoyer"}</button>
       </form>
     </div>
