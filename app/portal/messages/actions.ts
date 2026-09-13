@@ -24,36 +24,48 @@ function createDemoAdminClient() {
   });
 }
 
+function successForPriority(priority: number): ActionResult {
+  return { success: priority === 3 ? "Message critique envoyé." : priority === 2 ? "Message important envoyé." : "Message envoyé." };
+}
+
 export async function sendClinicalMessage(recipientId: string, body: string, priority = 1): Promise<ActionResult> {
   const profile = await requireMessenger();
   const cleanBody = typeof body === "string" ? body.trim() : "";
+  if (profile.facilityConfig["features.messaging"] === false) return { error: "Le module Messagerie est désactivé pour cet établissement." };
   if (!recipientId || recipientId === profile.id) return { error: "Destinataire invalide." };
   if (!cleanBody || cleanBody.length > 2000) return { error: "Le message doit contenir entre 1 et 2 000 caractères." };
   if (![1, 2, 3].includes(priority)) return { error: "Niveau d’importance invalide." };
 
   const supabase = await createClient();
+  const admin = createDemoAdminClient();
 
   // Preserve the existing audited/RLS-backed staff-to-staff path.
   if (profile.role !== "patient") {
-    const { data: recipientMembership } = await supabase
-      .from("facility_memberships")
-      .select("role")
-      .eq("facility_id", profile.facility.id)
-      .eq("user_id", recipientId)
-      .eq("active", true)
-      .maybeSingle();
-
-    if (recipientMembership && staffMessagingRoles.includes(recipientMembership.role)) {
+    if (!admin) {
       const { error } = await supabase.rpc("send_clinical_message", { p_recipient_id: recipientId, p_body: cleanBody, p_priority: priority });
       if (error) return { error: error.message };
       revalidatePath("/portal/messages");
       revalidatePath("/portal/pulse");
-      return { success: priority === 3 ? "Message critique envoyé." : priority === 2 ? "Message important envoyé." : "Message envoyé." };
+      return successForPriority(priority);
+    }
+
+    const { data: previewMembership } = await admin
+      .from("facility_memberships")
+      .select("role, active")
+      .eq("facility_id", profile.facility.id)
+      .eq("user_id", recipientId)
+      .maybeSingle();
+
+    if (previewMembership?.active && staffMessagingRoles.includes(previewMembership.role)) {
+      const { error } = await supabase.rpc("send_clinical_message", { p_recipient_id: recipientId, p_body: cleanBody, p_priority: priority });
+      if (error) return { error: error.message };
+      revalidatePath("/portal/messages");
+      revalidatePath("/portal/pulse");
+      return successForPriority(priority);
     }
   }
 
   // Patient chat is demo-only and never exposes the service key to the browser.
-  const admin = createDemoAdminClient();
   if (!admin) return { error: "Le chat patient n’est pas configuré sur cet environnement." };
 
   const { data: recipientMembership, error: recipientError } = await admin
