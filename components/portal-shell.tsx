@@ -7,21 +7,21 @@ import { roleLabels } from "@/lib/types";
 import { LogoutButton } from "@/components/logout-button";
 import { FacilitySwitcher } from "@/components/facility-switcher";
 
-type NavItem = { href: string; label: string; feature?: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
+type NavItem = { href: string; label: string; icon: string; feature?: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
 
 const navItems: NavItem[] = [
-  { href: "/portal", label: "Accueil" },
-  { href: "/portal/stays", label: "Séjours", roles: ["reception", "nurse", "admin"] },
-  { href: "/portal/patients", label: "Patients", roles: ["doctor"] },
-  { href: "/portal/permissions", label: "Permissions", feature: "permissions", hiddenFor: ["technical", "governance"] },
-  { href: "/portal/appointments", label: "Planning", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
-  { href: "/portal/activities", label: "Activités", feature: "activities", hiddenFor: ["doctor", "technical"] },
-  { href: "/portal/visits", label: "Visites", feature: "visits", roles: ["patient", "reception"] },
-  { href: "/portal/messages", label: "Messages", feature: "messaging", roles: ["doctor", "nurse"] },
-  { href: "/portal/menus", label: "Menus", feature: "menus", hiddenFor: ["doctor"] },
-  { href: "/portal/information", label: "Infos", feature: "information", hiddenFor: ["doctor"] },
-  { href: "/portal/housekeeping", label: "Hôtellerie", feature: "housekeeping", roles: ["governance", "technical", "admin"] },
-  { href: "/portal/admin", label: "Réglages", roles: ["admin"] },
+  { href: "/portal", label: "Accueil", icon: "⌂" },
+  { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "admin"] },
+  { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
+  { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance"] },
+  { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
+  { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical"] },
+  { href: "/portal/visits", label: "Visites", icon: "♧", feature: "visits", roles: ["patient", "reception"] },
+  { href: "/portal/messages", label: "Messages", icon: "✉", feature: "messaging", roles: ["doctor", "nurse"] },
+  { href: "/portal/menus", label: "Menus", icon: "≡", feature: "menus", hiddenFor: ["doctor"] },
+  { href: "/portal/information", label: "Infos", icon: "i", feature: "information", hiddenFor: ["doctor"] },
+  { href: "/portal/housekeeping", label: "Hôtellerie", icon: "◇", feature: "housekeeping", roles: ["governance", "technical", "admin"] },
+  { href: "/portal/admin", label: "Réglages", icon: "⚙", roles: ["admin"] },
 ];
 
 const routeFeatures: Record<string, string> = {
@@ -44,8 +44,10 @@ function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: bo
   const pathname = usePathname();
   return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
     {navItems.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
-      const active = pathname === item.href;
-      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>{item.label}</Link>;
+      const active = item.href === "/portal" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={item.label}>
+        <span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{item.label}</span>
+      </Link>;
     })}
   </nav>;
 }
@@ -57,6 +59,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const routeFeature = routeFeatures[pathname];
   const disabled = routeFeature && !featureEnabled(profile, routeFeature);
   const packLabel = profile.facility.countryPackCode === "AURA_FR" ? "FR" : profile.facility.countryPackCode === "AURA_DZ" ? "DZ" : "CORE";
+  const isDemo = profile.facilityConfig.demo === true;
 
   return <div className="portal">
     <aside className="sidebar">
@@ -66,7 +69,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
     </aside>
     <div className="portal-main">
       <header className="portal-header">
-        <div><div className="role-chip">{roleLabels[profile.role]} · {packLabel}</div><FacilitySwitcher facilities={profile.facilities} /></div>
+        <div className="portal-context"><div className="role-chip">{roleLabels[profile.role]} · {packLabel}</div>{isDemo && <span className="demo-chip">Données fictives</span>}<FacilitySwitcher facilities={profile.facilities} /></div>
         <div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div>
       </header>
       <main className="content">{disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p></div></section> : children}</main>
