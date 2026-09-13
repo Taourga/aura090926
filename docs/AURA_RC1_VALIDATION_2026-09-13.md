@@ -30,7 +30,7 @@ Vercel Preview:
 
 - état: READY;
 - `/api/health`: HTTP 200;
-- release retournée: `b3775fcd`;
+- release retournée: `b3775fcd` sur le preview fonctionnel contrôlé;
 - headers sécurité présents;
 - aucune erreur/fatal runtime relevée sur les dernières 24 h pour le preview RC1.
 
@@ -53,6 +53,24 @@ Résultat final:
 - décision cadre: `approved`;
 - départ horodaté: oui;
 - retour horodaté: oui;
+- patient: correct;
+- établissement: correct.
+
+## Test clinique critique — visite patient
+
+Test exécuté dans une transaction SQL avec `ROLLBACK`; aucune donnée de test conservée.
+
+Scénario:
+
+1. Camille Durand / patient programme une visite dans le créneau autorisé;
+2. Paul Morel / accueil enregistre l'arrivée du visiteur;
+3. Paul Morel / accueil enregistre son départ.
+
+Résultat final:
+
+- statut: `departed`;
+- arrivée horodatée: oui;
+- départ horodaté: oui;
 - patient: correct;
 - établissement: correct.
 
