@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
-import { facilityFeatureEnabled, requireProfile } from "@/lib/auth";
+import { PermissionForm } from "@/components/permission-form";
+import { facilityFeatureEnabled, facilitySettingNumber, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { permissionLabels, roleLabels } from "@/lib/types";
@@ -17,6 +18,26 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const quotePool = [
+  "Avancer doucement, c’est quand même avancer.",
+  "Aujourd’hui mérite d’être vécu un pas après l’autre.",
+  "Prendre soin de soi est déjà une victoire.",
+  "Chaque journée peut contenir un petit progrès.",
+  "Vous n’avez pas besoin de tout réussir aujourd’hui, seulement de continuer.",
+  "Le calme revient souvent par petites étapes.",
+  "Votre rythme compte autant que votre destination.",
+];
+
+function localParts(timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, hour: Number(get("hour")) };
+}
+
+function nextDate(dateKey: string) {
+  const date = new Date(`${dateKey}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + 1); return date.toISOString().slice(0, 10);
+}
+
 export default async function PortalPage() {
   const profile = await requireProfile();
   if (profile.role === "trusted_contact") redirect("/portal/proche");
@@ -28,38 +49,65 @@ export default async function PortalPage() {
   if (profile.role === "patient") {
     const showPermissions = facilityFeatureEnabled(profile, "permissions");
     const showActivities = facilityFeatureEnabled(profile, "activities");
-    const showSport = facilityFeatureEnabled(profile, "sport");
     const showVisits = facilityFeatureEnabled(profile, "visits");
     const showInformation = facilityFeatureEnabled(profile, "information");
-    const patientFloor = Number.parseInt(profile.activeStay?.room_number?.slice(0, 1) || "", 10);
-    const [{ data: appointments }, { data: permissions }, { data: enrollments }, { count: informationCount }, { data: doctorRounds }, { data: visits }] = await Promise.all([
-      supabase.from("appointments").select("id, title, starts_at, ends_at, location").eq("patient_id", profile.id).gte("ends_at", new Date().toISOString()).order("starts_at").limit(1),
-      showPermissions ? supabase.from("permission_requests").select("id, departure_at, return_at, status").eq("patient_id", profile.id).gte("return_at", new Date().toISOString()).order("departure_at").limit(1) : Promise.resolve({ data: [] }),
-      showActivities ? supabase.from("activity_enrollments").select("activity:activities(title, starts_at, location)").eq("patient_id", profile.id).limit(1) : Promise.resolve({ data: [] }),
-      showInformation ? supabase.from("information_posts").select("id", { count: "exact", head: true }).eq("published", true) : Promise.resolve({ count: 0 }),
-      Number.isNaN(patientFloor)
-        ? Promise.resolve({ data: [] as { id: string; scheduled_at: string }[] })
-        : supabase.from("doctor_rounds").select("id, scheduled_at").eq("floor_number", patientFloor).gte("scheduled_at", new Date().toISOString()).order("scheduled_at").limit(1),
-      showVisits ? supabase.from("visit_notifications").select("id, scheduled_start, visitor_one_name").eq("patient_id", profile.id).gte("scheduled_end", new Date().toISOString()).order("scheduled_start").limit(1) : Promise.resolve({ data: [] }),
+    const minNoticeHours = facilitySettingNumber(profile, "permissions.min_notice_hours", 48);
+    const local = localParts(profile.facility.timezone);
+    const tomorrow = nextDate(local.date);
+    const horizon = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const [{ data: appointments }, { data: permissions }, { data: enrollments }, { data: doctorRounds }, { data: visits }, { data: informationPosts }, { data: menus }] = await Promise.all([
+      supabase.from("appointments").select("id,title,starts_at,ends_at,location").eq("patient_id", profile.id).gte("ends_at", new Date().toISOString()).lte("starts_at", horizon).order("starts_at").limit(12),
+      showPermissions ? supabase.from("permission_requests").select("id,departure_at,return_at,status,reason").eq("patient_id", profile.id).gte("return_at", new Date().toISOString()).lte("departure_at", horizon).order("departure_at").limit(12) : Promise.resolve({ data: [] }),
+      showActivities ? supabase.from("activity_enrollments").select("id,activity:activities!inner(title,starts_at,ends_at,location)").eq("patient_id", profile.id).gte("activity.ends_at", new Date().toISOString()).lte("activity.starts_at", horizon).limit(12) : Promise.resolve({ data: [] }),
+      supabase.from("doctor_rounds").select("id,scheduled_at,duration_minutes,floor_number,doctor:profiles!doctor_rounds_doctor_id_fkey(full_name)").gte("scheduled_at", new Date().toISOString()).lte("scheduled_at", horizon).order("scheduled_at").limit(6),
+      showVisits ? supabase.from("visit_notifications").select("id,scheduled_start,visitor_one_name,status").eq("patient_id", profile.id).gte("scheduled_end", new Date().toISOString()).lte("scheduled_start", horizon).order("scheduled_start").limit(4) : Promise.resolve({ data: [] }),
+      showInformation ? supabase.from("information_posts").select("id,title,body,created_at").eq("published", true).order("created_at", { ascending: false }).limit(3) : Promise.resolve({ data: [] }),
+      supabase.from("menu_items").select("id,service_date,meal,description").in("service_date", [local.date, tomorrow]).order("service_date").limit(12),
     ]);
-    const nextAppointment = appointments?.[0];
-    const nextPermission = permissions?.[0];
-    const activityRelation = enrollments?.[0]?.activity as { title: string; starts_at: string; location: string | null } | { title: string; starts_at: string; location: string | null }[] | null | undefined;
-    const nextActivity = Array.isArray(activityRelation) ? activityRelation[0] : activityRelation;
-    const doctorRound = doctorRounds?.[0];
-    const nextVisit = visits?.[0];
+
+    const activityItems = (enrollments || []).flatMap((row) => { const relation = row.activity as { title: string; starts_at: string; ends_at: string; location: string | null } | { title: string; starts_at: string; ends_at: string; location: string | null }[] | null; const activity = Array.isArray(relation) ? relation[0] : relation; return activity ? [{ id: row.id, ...activity }] : []; });
+    const keyOf = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: profile.facility.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+    const todayEvents = [
+      ...(appointments || []).filter((item) => keyOf(item.starts_at) === local.date).map((item) => ({ time: item.starts_at, label: item.title, meta: item.location || "Rendez-vous", type: "Rendez-vous" })),
+      ...activityItems.filter((item) => keyOf(item.starts_at) === local.date).map((item) => ({ time: item.starts_at, label: item.title, meta: item.location || "Activité", type: "Activité" })),
+      ...(permissions || []).filter((item) => keyOf(item.departure_at) === local.date && ["approved", "departed"].includes(item.status)).map((item) => ({ time: item.departure_at, label: "Permission de sortie", meta: `Retour ${displayTime(item.return_at)}`, type: "Permission" })),
+      ...(doctorRounds || []).filter((item) => keyOf(item.scheduled_at) === local.date).map((item) => ({ time: item.scheduled_at, label: "Passage du médecin", meta: `Étage ${item.floor_number}`, type: "Médecin" })),
+    ].sort((a,b) => new Date(a.time).getTime()-new Date(b.time).getTime());
+    const tomorrowEvents = [
+      ...(appointments || []).filter((item) => keyOf(item.starts_at) === tomorrow).map((item) => ({ time: item.starts_at, label: item.title, meta: item.location || "Rendez-vous", type: "Rendez-vous" })),
+      ...activityItems.filter((item) => keyOf(item.starts_at) === tomorrow).map((item) => ({ time: item.starts_at, label: item.title, meta: item.location || "Activité", type: "Activité" })),
+      ...(permissions || []).filter((item) => keyOf(item.departure_at) === tomorrow && ["approved", "departed"].includes(item.status)).map((item) => ({ time: item.departure_at, label: "Permission de sortie", meta: `Retour ${displayTime(item.return_at)}`, type: "Permission" })),
+      ...(doctorRounds || []).filter((item) => keyOf(item.scheduled_at) === tomorrow).map((item) => ({ time: item.scheduled_at, label: "Passage du médecin", meta: `Étage ${item.floor_number}`, type: "Médecin" })),
+    ].sort((a,b) => new Date(a.time).getTime()-new Date(b.time).getTime());
+
+    const mealOrder = [{ meal:"breakfast", hour:8, label:"Petit-déjeuner" }, { meal:"lunch", hour:12, label:"Déjeuner" }, { meal:"dinner", hour:19, label:"Dîner" }];
+    let targetDate = local.date; let target = mealOrder.find((meal) => local.hour < meal.hour);
+    if (!target) { targetDate = tomorrow; target = mealOrder[0]; }
+    const nextMeal = (menus || []).find((item) => item.service_date === targetDate && item.meal === target?.meal);
+    const quote = quotePool[(Number(local.date.replaceAll("-", "")) || 0) % quotePool.length];
+    const nextPermission = (permissions || [])[0];
+    const nextVisit = (visits || [])[0];
 
     return <PortalShell profile={profile}>
-      <div className="page-intro"><div><h1>Bonjour, {profile.full_name.split(" ")[0]}</h1><p>Vos informations essentielles à {profile.facility.name}, en un coup d’œil.</p></div>{showPermissions && <Link className="button button-primary" href="/portal/permissions">Demander une permission</Link>}</div>
-      <section className="summary-link-grid" aria-label="Raccourcis de séjour">
-        <Link href="/portal/appointments" className="summary-link"><span>Rendez-vous</span><strong>{nextAppointment ? displayTime(nextAppointment.starts_at) : "Aucun"}</strong><small>{nextAppointment ? nextAppointment.title : "Voir mon planning"}</small></Link>
-        {showActivities && <Link href="/portal/activities" className="summary-link"><span>Activités</span><strong>{nextActivity ? "À venir" : "Aucune"}</strong><small>{nextActivity ? nextActivity.title : "Voir les ateliers"}</small></Link>}
-        {showPermissions && <Link href="/portal/permissions" className="summary-link"><span>Permissions</span><strong>{nextPermission ? permissionLabels[nextPermission.status as keyof typeof permissionLabels] : "Aucune"}</strong><small>{nextPermission ? `Prévue ${displayDateTime(nextPermission.departure_at)}` : "Faire une demande"}</small></Link>}
-        {showSport && <Link href="/portal/sport-room" className="summary-link"><span>Salle de sport</span><strong>Disponible</strong><small>Voir le planning de l’établissement</small></Link>}
-        {showVisits && <Link href="/portal/visits" className="summary-link"><span>Visites</span><strong>{nextVisit ? displayTime(nextVisit.scheduled_start) : "Aucune"}</strong><small>{nextVisit ? `Avec ${nextVisit.visitor_one_name}` : "Prévenir l’accueil"}</small></Link>}
-        {showInformation && <Link href="/portal/information" className="summary-link"><span>Informations</span><strong>{informationCount || 0}</strong><small>Voir les informations de séjour</small></Link>}
+      <div className="patient-home-hero"><div><div className="section-kicker">Votre séjour aujourd’hui</div><h1>Bonjour, {profile.full_name.split(" ")[0]}</h1><p>Tout ce qui compte pour votre journée, sans avoir à chercher dans l’application.</p></div><Link className="button button-secondary" href="/portal/appointments">Voir tout mon planning</Link></div>
+
+      <section className="patient-day-grid">
+        <div className="patient-day-card"><div className="patient-day-head"><div><span>Aujourd’hui</span><strong>{todayEvents.length} événement{todayEvents.length > 1 ? "s" : ""}</strong></div><Link href="/portal/appointments">Planning →</Link></div><div className="patient-day-list">{todayEvents.length ? todayEvents.map((item,index)=><div className="patient-day-event" key={`${item.type}-${index}`}><time>{displayTime(item.time)}</time><div><strong>{item.label}</strong><small>{item.type} · {item.meta}</small></div></div>) : <p className="empty">Rien de prévu pour le reste de la journée.</p>}</div></div>
+        <div className="patient-day-card"><div className="patient-day-head"><div><span>Demain</span><strong>{tomorrowEvents.length} événement{tomorrowEvents.length > 1 ? "s" : ""}</strong></div><Link href="/portal/appointments">Voir →</Link></div><div className="patient-day-list">{tomorrowEvents.length ? tomorrowEvents.slice(0,5).map((item,index)=><div className="patient-day-event" key={`${item.type}-${index}`}><time>{displayTime(item.time)}</time><div><strong>{item.label}</strong><small>{item.type} · {item.meta}</small></div></div>) : <p className="empty">Aucun événement prévu pour demain.</p>}</div></div>
       </section>
-      {doctorRound && <Link className="overview-note" href="/portal/appointments"><strong>Passage du médecin</strong><span>Prévu le {displayDateTime(doctorRound.scheduled_at)} dans votre étage.</span></Link>}
+
+      <section className="patient-glance-grid">
+        <Link href="/portal/menus" className="patient-glance-card patient-glance-card--meal"><span>🍽 Prochain repas</span><strong>{target?.label || "Repas"} · {target?.hour || "—"} h</strong><small>{nextMeal?.description || "Menu à confirmer"}</small></Link>
+        {showPermissions && <Link href="/portal/permissions" className="patient-glance-card"><span>↗ Prochaine permission</span><strong>{nextPermission ? permissionLabels[nextPermission.status as keyof typeof permissionLabels] : "Aucune demande"}</strong><small>{nextPermission ? `${displayDateTime(nextPermission.departure_at)} → ${displayTime(nextPermission.return_at)}` : "Vous pouvez faire une demande ci-dessous"}</small></Link>}
+        {showVisits && <Link href="/portal/visits" className="patient-glance-card"><span>♧ Prochaine visite</span><strong>{nextVisit ? displayTime(nextVisit.scheduled_start) : "Aucune visite"}</strong><small>{nextVisit ? nextVisit.visitor_one_name : "Prévenir l’accueil d’une visite"}</small></Link>}
+        <div className="patient-glance-card patient-glance-card--quote"><span>✦ Citation du jour</span><strong>“{quote}”</strong><small>Une petite respiration pour commencer la journée.</small></div>
+      </section>
+
+      {showInformation && <section className="patient-info-preview"><div className="patient-section-head"><div><span>Informations utiles</span><h2>À savoir pendant votre séjour</h2></div><Link href="/portal/information">Tout voir →</Link></div><div className="patient-info-cards">{informationPosts?.length ? informationPosts.map((post)=><Link href="/portal/information" className="patient-info-card" key={post.id}><strong>{post.title}</strong><p>{post.body.length > 130 ? `${post.body.slice(0,130)}…` : post.body}</p><span>Lire le détail →</span></Link>) : <p className="empty">Aucune nouvelle information.</p>}</div></section>}
+
+      {showPermissions && <section className="patient-quick-action"><div className="patient-section-head"><div><span>Action rapide</span><h2>Demander une permission sans quitter l’accueil</h2></div><Link href="/portal/permissions">Voir mon calendrier →</Link></div><PermissionForm minNoticeHours={minNoticeHours} compact /></section>}
+
+      <section className="patient-shortcuts"><Link href="/portal/appointments">◷ Mon planning</Link>{showActivities && <Link href="/portal/activities">✦ Mes activités</Link>}<Link href="/portal/contacts">☎ Contacts & proche</Link>{showInformation && <Link href="/portal/information">i Infos pratiques</Link>}</section>
     </PortalShell>;
   }
 
@@ -92,9 +140,5 @@ export default async function PortalPage() {
     supabase.from("appointments").select("id, title, starts_at, location, patient:profiles!appointments_patient_id_fkey(full_name)").gte("starts_at", new Date().toISOString()).order("starts_at").limit(6),
   ]);
   const firstName = profile.full_name.split(" ")[0];
-  return <PortalShell profile={profile}>
-    <div className="page-intro"><div><h1>Bonjour, {firstName}</h1><p>Vue opérationnelle · {roleLabels[profile.role]} · {profile.facility.name}</p></div><Link className="button button-primary" href={profile.role === "admin" ? "/portal/admin" : "/portal/permissions"}>{profile.role === "admin" ? "Gérer l’établissement" : "Voir les permissions"}</Link></div>
-    <div className="metric-grid"><div className="metric"><span>Décisions à traiter</span><strong>{pendingCount || 0}</strong><div className="metric-detail">Permissions en attente</div></div><div className="metric"><span>Permissions autorisées</span><strong>{approvedCount || 0}</strong><div className="metric-detail">À venir ou à enregistrer</div></div><div className="metric"><span>Patients absents</span><strong>{departedCount || 0}</strong><div className="metric-detail">Retour non enregistré</div></div><div className="metric"><span>Rendez-vous à venir</span><strong>{upcomingAppointments?.length || 0}</strong><div className="metric-detail">Prochains créneaux</div></div></div>
-    <section className="card"><div className="card-header"><div><h2>Prochains rendez-vous</h2><p className="card-subtitle">Planning à venir des patients</p></div></div><div className="card-body"><div className="list">{upcomingAppointments?.length ? upcomingAppointments.map((item) => { const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient; return <div className="list-row" key={item.id}><div className="time">{displayTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{patient?.full_name || "Patient"} · {item.location || "Lieu à confirmer"}</div></div><span className="badge badge-info">Prévu</span></div>; }) : <p className="empty">Aucun rendez-vous à venir.</p>}</div></div></section>
-  </PortalShell>;
+  return <PortalShell profile={profile}><div className="page-intro"><div><h1>Bonjour, {firstName}</h1><p>Vue opérationnelle · {roleLabels[profile.role]} · {profile.facility.name}</p></div><Link className="button button-primary" href={profile.role === "admin" ? "/portal/admin" : "/portal/permissions"}>{profile.role === "admin" ? "Gérer l’établissement" : "Voir les permissions"}</Link></div><div className="metric-grid"><div className="metric"><span>Décisions à traiter</span><strong>{pendingCount || 0}</strong><div className="metric-detail">Permissions en attente</div></div><div className="metric"><span>Permissions autorisées</span><strong>{approvedCount || 0}</strong><div className="metric-detail">À venir ou à enregistrer</div></div><div className="metric"><span>Patients absents</span><strong>{departedCount || 0}</strong><div className="metric-detail">Retour non enregistré</div></div><div className="metric"><span>Rendez-vous à venir</span><strong>{upcomingAppointments?.length || 0}</strong><div className="metric-detail">Prochains créneaux</div></div></div></PortalShell>;
 }
