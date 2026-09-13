@@ -89,6 +89,8 @@ tbody tr:hover td{background:#fbfdfd}
 .doctor-simple-header,.reception-fastqueue,.patient-cockpit-day,.patient-cockpit-side>*{box-shadow:0 7px 22px rgba(21,44,57,.03)}
 .doctor-simple-actions{flex-wrap:wrap;justify-content:flex-end}
 .doctor-simple-row strong{overflow-wrap:anywhere}
+.contact-link{display:inline-flex;width:max-content;max-width:100%;color:#0d6670;text-decoration:none;font-weight:750;overflow-wrap:anywhere}
+.contact-link:hover{text-decoration:underline;text-underline-offset:3px}
 
 .clinical-messenger,.messenger,.messages-layout{min-height:0}
 
@@ -97,6 +99,12 @@ tbody tr:hover td{background:#fbfdfd}
 .admin-shortcuts a:hover{transform:translateY(-2px);border-color:#bfd7da;box-shadow:0 8px 22px rgba(21,44,57,.06)}
 .admin-shortcuts strong{font-size:14px}
 .admin-shortcuts span{font-size:12px;line-height:1.4;color:var(--aura-muted)}
+
+.weekly-menu-day-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.weekly-menu-day--today{border-color:#b8d8da!important;box-shadow:0 7px 20px rgba(13,102,112,.08)}
+
+.housekeeping-head-actions{display:grid;justify-items:end;gap:8px}
+.housekeeping-head-actions .cleaning-date{margin:0}
 
 /* Make dense operational screens easier to scan without hiding information. */
 .content :where(.grid,.metric-grid,.staff-metric-grid)>*{min-width:0}
@@ -128,6 +136,7 @@ button[class*="danger"],.button-danger{box-shadow:none!important}
   .mobile-nav a{flex:0 0 auto;min-width:70px}
   .page-intro{align-items:flex-start;flex-direction:column}
   .page-intro-actions{justify-content:flex-start}
+  .housekeeping-head-actions{justify-items:start;width:100%}
 }
 
 @media(max-width:640px){
