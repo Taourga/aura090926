@@ -12,6 +12,8 @@ type NavItem = { href: string; label: string; icon: string; feature?: string; ro
 const navItems: NavItem[] = [
   { href: "/portal", label: "Accueil", icon: "⌂" },
   { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
+  { href: "/portal/handoff", label: "Relève", icon: "↻", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
+  { href: "/portal/roi", label: "AURA ROI", icon: "↗", roles: ["doctor", "manager", "admin", "governance"] },
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
