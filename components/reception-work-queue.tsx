@@ -4,7 +4,7 @@ import { VisitMovementActions } from "@/components/visit-actions";
 import { BulletinReceptionActions } from "@/components/bulletin-request-button";
 import { OperationalTaskButton } from "@/components/operational-task-button";
 import { CompletePatientHelpButton } from "@/components/patient-help-feedback";
-import { formatDateTime } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 
 type Rel = { full_name: string | null } | { full_name: string | null }[] | null;
 const nameOf = (rel: Rel) => (Array.isArray(rel) ? rel[0]?.full_name : rel?.full_name) || "Patient";
@@ -18,14 +18,13 @@ type Help = { id: string; category: string; message: string | null; created_at: 
 
 type QueueItem = {
   key: string;
+  priority: number;
   sortAt: number;
-  kind: "departure" | "return" | "visit-arrival" | "visit-departure" | "bulletin" | "task" | "discharge" | "help";
-  title: string;
-  detail: string;
-  payload: Permission | Visit | Bulletin | Task | Discharge | Help;
+  label: string;
+  patient: string;
+  meta: string;
+  action: React.ReactNode;
 };
-
-const helpLabel: Record<string, string> = { room: "Chambre", meal: "Repas", planning: "Planning", admin: "Administratif" };
 
 export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, discharges, helpRequests, locale, timezone }: {
   permissions: Permission[];
@@ -37,34 +36,96 @@ export function ReceptionWorkQueue({ permissions, visits, bulletins, tasks, disc
   locale: string;
   timezone: string;
 }) {
-  const fmt = (v: string | null | undefined) => formatDateTime(v, locale, timezone);
   const now = Date.now();
+  const tm = (value: string) => formatTime(value, locale, timezone);
   const items: QueueItem[] = [
-    ...permissions.filter((p) => p.status === "approved").map((p) => ({ key: `dep-${p.id}`, sortAt: new Date(p.departure_at).getTime(), kind: "departure" as const, title: `Départ · ${nameOf(p.patient)}`, detail: `Prévu ${fmt(p.departure_at)}`, payload: p })),
-    ...permissions.filter((p) => p.status === "departed").map((p) => ({ key: `ret-${p.id}`, sortAt: new Date(p.return_at).getTime(), kind: "return" as const, title: `Retour · ${nameOf(p.patient)}`, detail: `${new Date(p.return_at).getTime() < now ? "En retard · " : "Prévu · "}${fmt(p.return_at)}`, payload: p })),
-    ...visits.filter((v) => v.status === "scheduled").map((v) => ({ key: `va-${v.id}`, sortAt: new Date(v.scheduled_start).getTime(), kind: "visit-arrival" as const, title: `Visite · ${v.visitor_one_name}`, detail: `${nameOf(v.patient)} · ${fmt(v.scheduled_start)}`, payload: v })),
-    ...visits.filter((v) => v.status === "arrived").map((v) => ({ key: `vd-${v.id}`, sortAt: now - 1000, kind: "visit-departure" as const, title: `Visiteur sur site · ${v.visitor_one_name}`, detail: `${nameOf(v.patient)} · départ à enregistrer`, payload: v })),
-    ...bulletins.map((b) => ({ key: `bul-${b.id}`, sortAt: new Date(b.requested_at).getTime(), kind: "bulletin" as const, title: `Bulletin · ${nameOf(b.patient)}`, detail: `${b.status === "pending" ? "À générer" : "À envoyer"}${b.email_to ? ` · ${b.email_to}` : ""}`, payload: b })),
-    ...helpRequests.map((h) => ({ key: `help-${h.id}`, sortAt: new Date(h.created_at).getTime(), kind: "help" as const, title: `${helpLabel[h.category] || "Demande"} · ${nameOf(h.patient)}`, detail: h.message || "Demande patient sans précision", payload: h })),
-    ...tasks.map((t) => ({ key: `task-${t.id}`, sortAt: t.due_at ? new Date(t.due_at).getTime() : now + 86400000, kind: "task" as const, title: t.title, detail: `${nameOf(t.patient)}${t.due_at ? ` · ${fmt(t.due_at)}` : ""}`, payload: t })),
-    ...discharges.filter((d) => d.planned_discharge_at).map((d) => ({ key: `dis-${d.stay_id}`, sortAt: new Date(d.planned_discharge_at as string).getTime(), kind: "discharge" as const, title: `Sortie définitive · ${d.patient_name}`, detail: `Chambre ${d.room_number || "—"} · ${fmt(d.planned_discharge_at)}`, payload: d })),
-  ].sort((a, b) => a.sortAt - b.sortAt);
+    ...permissions.filter((p) => p.status === "departed").map((p) => ({
+      key: `ret-${p.id}`,
+      priority: new Date(p.return_at).getTime() < now ? 0 : 1,
+      sortAt: new Date(p.return_at).getTime(),
+      label: new Date(p.return_at).getTime() < now ? "RETARD" : "RETOUR",
+      patient: nameOf(p.patient),
+      meta: `prévu ${tm(p.return_at)}`,
+      action: <MovementActions permissionId={p.id} action="return" />,
+    })),
+    ...permissions.filter((p) => p.status === "approved").map((p) => ({
+      key: `dep-${p.id}`,
+      priority: 1,
+      sortAt: new Date(p.departure_at).getTime(),
+      label: "DÉPART",
+      patient: nameOf(p.patient),
+      meta: `prévu ${tm(p.departure_at)}`,
+      action: <MovementActions permissionId={p.id} action="depart" />,
+    })),
+    ...visits.filter((v) => v.status === "arrived").map((v) => ({
+      key: `vd-${v.id}`,
+      priority: 1,
+      sortAt: now,
+      label: "VISITE",
+      patient: `${v.visitor_one_name} · ${nameOf(v.patient)}`,
+      meta: "visiteur présent",
+      action: <VisitMovementActions visitId={v.id} action="depart" />,
+    })),
+    ...visits.filter((v) => v.status === "scheduled").map((v) => ({
+      key: `va-${v.id}`,
+      priority: 2,
+      sortAt: new Date(v.scheduled_start).getTime(),
+      label: "VISITE",
+      patient: `${v.visitor_one_name} · ${nameOf(v.patient)}`,
+      meta: tm(v.scheduled_start),
+      action: <VisitMovementActions visitId={v.id} action="arrive" />,
+    })),
+    ...bulletins.map((b) => ({
+      key: `bul-${b.id}`,
+      priority: 2,
+      sortAt: new Date(b.requested_at).getTime(),
+      label: "BULLETIN",
+      patient: nameOf(b.patient),
+      meta: b.status === "pending" ? "à générer" : "à envoyer",
+      action: <BulletinReceptionActions requestId={b.id} status={b.status} />,
+    })),
+    ...helpRequests.map((h) => ({
+      key: `help-${h.id}`,
+      priority: 2,
+      sortAt: new Date(h.created_at).getTime(),
+      label: "DEMANDE",
+      patient: nameOf(h.patient),
+      meta: h.message || h.category,
+      action: <CompletePatientHelpButton id={h.id} />,
+    })),
+    ...tasks.map((t) => ({
+      key: `task-${t.id}`,
+      priority: 3,
+      sortAt: t.due_at ? new Date(t.due_at).getTime() : now + 86400000,
+      label: "TÂCHE",
+      patient: nameOf(t.patient),
+      meta: t.title,
+      action: <OperationalTaskButton taskId={t.id} />,
+    })),
+    ...discharges.filter((d) => d.planned_discharge_at).map((d) => ({
+      key: `dis-${d.stay_id}`,
+      priority: 3,
+      sortAt: new Date(d.planned_discharge_at as string).getTime(),
+      label: "SORTIE",
+      patient: d.patient_name,
+      meta: `ch. ${d.room_number || "—"}`,
+      action: <Link className="button button-secondary button-small" href="/portal/discharges">Ouvrir</Link>,
+    })),
+  ].sort((a, b) => a.priority - b.priority || a.sortAt - b.sortAt);
 
-  return <section className="reception-queue-card">
-    <div className="reception-queue-head"><div><p className="section-kicker">File de travail unique</p><h2>À traiter à l’accueil</h2><p>Départs, retours, visites, demandes patient, documents et sorties définitives dans une seule liste.</p></div><span className="count-pill">{items.length}</span></div>
-    <div className="reception-queue-list">{items.length ? items.slice(0, 16).map((item) => <div className={`reception-queue-row reception-queue-row--${item.kind}`} key={item.key}>
-      <div className="reception-queue-icon" aria-hidden="true">{item.kind === "departure" ? "↗" : item.kind === "return" ? "↙" : item.kind.startsWith("visit") ? "♧" : item.kind === "bulletin" ? "▤" : item.kind === "task" ? "✓" : item.kind === "help" ? "?" : "⇥"}</div>
-      <div className="reception-queue-copy"><strong>{item.title}</strong><small>{item.detail}</small></div>
-      <div className="reception-queue-action">
-        {item.kind === "departure" && <MovementActions permissionId={(item.payload as Permission).id} action="depart" />}
-        {item.kind === "return" && <MovementActions permissionId={(item.payload as Permission).id} action="return" />}
-        {item.kind === "visit-arrival" && <VisitMovementActions visitId={(item.payload as Visit).id} action="arrive" />}
-        {item.kind === "visit-departure" && <VisitMovementActions visitId={(item.payload as Visit).id} action="depart" />}
-        {item.kind === "bulletin" && <BulletinReceptionActions requestId={(item.payload as Bulletin).id} status={(item.payload as Bulletin).status} />}
-        {item.kind === "help" && <CompletePatientHelpButton id={(item.payload as Help).id} />}
-        {item.kind === "task" && <OperationalTaskButton taskId={(item.payload as Task).id} />}
-        {item.kind === "discharge" && <Link className="button button-secondary button-small" href="/portal/discharges">Ouvrir</Link>}
-      </div>
-    </div>) : <div className="queue-empty"><span aria-hidden="true">✓</span>Rien à traiter pour le moment.</div>}</div>
+  const visible = items.slice(0, 10);
+  return <section className="reception-fastqueue">
+    <div className="reception-fastqueue-head">
+      <div><span className="section-kicker">Accueil</span><h1>À faire maintenant</h1><p>Une ligne, une personne, une action.</p></div>
+      <strong>{items.length}</strong>
+    </div>
+    <div className="reception-fastqueue-list">
+      {visible.length ? visible.map((item) => <div className={`reception-fastqueue-row${item.priority === 0 ? " reception-fastqueue-row--urgent" : ""}`} key={item.key}>
+        <span className="reception-fastqueue-kind">{item.label}</span>
+        <div className="reception-fastqueue-person"><strong>{item.patient}</strong><small>{item.meta}</small></div>
+        <div className="reception-fastqueue-action">{item.action}</div>
+      </div>) : <div className="queue-empty"><span aria-hidden="true">✓</span>Rien à traiter maintenant.</div>}
+    </div>
+    {items.length > visible.length && <p className="reception-fastqueue-more">+ {items.length - visible.length} action{items.length - visible.length > 1 ? "s" : ""} ensuite</p>}
   </section>;
 }
