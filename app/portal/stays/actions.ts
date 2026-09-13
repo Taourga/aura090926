@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 
 function refresh() {
   revalidatePath("/portal", "layout");
+  revalidatePath("/portal/pulse");
+  revalidatePath("/portal/discharges");
 }
 export async function createAdmission(patient: string, room: string, expected: string) {
   const profile = await requireProfile();
@@ -26,7 +28,7 @@ export async function admissionAction(id: string, action: "arrive" | "cancel") {
 }
 export async function dischargeAction(stay: string, expected: string, confirm: boolean) {
   const profile = await requireProfile();
-  if (!["nurse", "admin"].includes(profile.role)) return { error: "Action réservée aux infirmiers." };
+  if (!["doctor", "nurse", "admin"].includes(profile.role)) return { error: "Action réservée aux médecins et infirmiers." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("plan_discharge", { p_stay: stay, p_expected: expected, p_confirm: confirm });
   if (error) return { error: error.message };
