@@ -14,14 +14,14 @@ const navItems: NavItem[] = [
   { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
-  { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
-  { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance"] },
+  { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor", "manager", "nurse", "psychologist", "provider"] },
+  { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance", "trusted_contact"] },
   { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
-  { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical"] },
+  { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical", "trusted_contact"] },
   { href: "/portal/visits", label: "Visites", icon: "♧", feature: "visits", roles: ["patient", "reception"] },
   { href: "/portal/messages", label: "Messages", icon: "✉", feature: "messaging", roles: ["doctor", "nurse", "manager", "governance"] },
-  { href: "/portal/menus", label: "Menus", icon: "≡", feature: "menus", hiddenFor: ["doctor"] },
-  { href: "/portal/information", label: "Infos", icon: "i", feature: "information", hiddenFor: ["doctor"] },
+  { href: "/portal/menus", label: "Menus", icon: "≡", feature: "menus", hiddenFor: ["doctor", "trusted_contact"] },
+  { href: "/portal/information", label: "Infos", icon: "i", feature: "information", hiddenFor: ["doctor", "trusted_contact"] },
   { href: "/portal/housekeeping", label: "Hôtellerie", icon: "◇", feature: "housekeeping", roles: ["governance", "technical", "admin"] },
   { href: "/portal/admin", label: "Réglages", icon: "⚙", roles: ["admin"] },
 ];
@@ -44,8 +44,11 @@ function featureEnabled(profile: Profile, feature?: string) {
 
 function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: boolean }) {
   const pathname = usePathname();
+  const items = profile.role === "trusted_contact"
+    ? [{ href: "/portal/proche", label: "Mon proche", icon: "♡" } satisfies NavItem]
+    : navItems;
   return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
-    {navItems.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
+    {items.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
       const active = item.href === "/portal" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
       return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={item.label}>
         <span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{item.label}</span>
@@ -65,7 +68,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
 
   return <div className="portal">
     <aside className="sidebar">
-      <Link href="/portal" className="brand"><span className="brand-mark">A</span><span>AURA</span></Link>
+      <Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand"><span className="brand-mark">A</span><span>AURA</span></Link>
       <Navigation profile={profile} />
       <div className="sidebar-footer"><strong>{profile.facility.name}</strong><br />AURA {packLabel} · Accès sécurisé</div>
     </aside>
