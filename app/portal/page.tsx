@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { PermissionForm } from "@/components/permission-form";
-import { BulletinRequestButton, BulletinReceptionActions } from "@/components/bulletin-request-button";
+import { BulletinRequestButton } from "@/components/bulletin-request-button";
+import { PatientDailyFeedback, PatientHelpCard } from "@/components/patient-help-feedback";
+import { ReceptionWorkQueue } from "@/components/reception-work-queue";
 import { facilityFeatureEnabled, facilitySettingNumber, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatTime } from "@/lib/format";
@@ -54,7 +56,7 @@ export default async function PortalPage() {
     const tomorrow = nextDate(local.date);
     const horizon = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     const now = new Date().toISOString();
-    const [{ data: appointments }, { data: permissions }, { data: enrollments }, { data: doctorRounds }, { data: visits }, { data: informationPosts }, { data: menus }, { data: rosterRows }, { data: bulletinRows }] = await Promise.all([
+    const [{ data: appointments }, { data: permissions }, { data: enrollments }, { data: doctorRounds }, { data: visits }, { data: informationPosts }, { data: menus }, { data: rosterRows }, { data: bulletinRows }, { data: activeStayRows }, { data: feedbackRows }] = await Promise.all([
       supabase.from("appointments").select("id,title,starts_at,ends_at,location").eq("patient_id", profile.id).gte("ends_at", now).lte("starts_at", horizon).order("starts_at").limit(12),
       showPermissions ? supabase.from("permission_requests").select("id,departure_at,return_at,status,reason").eq("patient_id", profile.id).gte("return_at", now).lte("departure_at", horizon).order("departure_at").limit(12) : Promise.resolve({ data: [] }),
       showActivities ? supabase.from("activity_enrollments").select("id,activity:activities!inner(id,title,starts_at,ends_at,location)").eq("patient_id", profile.id).gte("activity.ends_at", now).lte("activity.starts_at", horizon).limit(12) : Promise.resolve({ data: [] }),
@@ -64,6 +66,8 @@ export default async function PortalPage() {
       supabase.from("menu_items").select("id,service_date,meal,description").in("service_date", [local.date, tomorrow]).order("service_date").limit(12),
       supabase.from("clinic_patient_roster").select("reference_doctor_id,reference_doctor:care_team_directory!clinic_patient_roster_reference_doctor_id_fkey(id,full_name,specialty,email)").eq("linked_profile_id", profile.id).limit(1),
       supabase.from("bulletin_requests").select("id,status,requested_at").eq("patient_id", profile.id).eq("status", "pending").limit(1),
+      supabase.from("patient_stays").select("planned_discharge_at").eq("patient_id", profile.id).is("ended_at", null).limit(1),
+      supabase.from("patient_daily_feedback").select("mood,feedback_date").eq("patient_id", profile.id).eq("feedback_date", local.date).limit(1),
     ]);
 
     const activityItems = (enrollments || []).flatMap((row) => { const relation = row.activity as { id: string; title: string; starts_at: string; ends_at: string; location: string | null } | { id: string; title: string; starts_at: string; ends_at: string; location: string | null }[] | null; const activity = Array.isArray(relation) ? relation[0] : relation; return activity ? [{ enrollmentId: row.id, ...activity }] : []; });
@@ -96,6 +100,10 @@ export default async function PortalPage() {
     const quote = quotePool[(Number(local.date.replaceAll("-", "")) || 0) % quotePool.length];
     const nextPermission = (permissions || [])[0];
     const nextVisit = (visits || [])[0];
+    const nextActions = [...todayEvents, ...tomorrowEvents].filter((event) => new Date(event.time).getTime() >= Date.now()).sort((a,b) => new Date(a.time).getTime()-new Date(b.time).getTime()).slice(0,3);
+    const plannedDischarge = activeStayRows?.[0]?.planned_discharge_at || null;
+    const dischargeDays = plannedDischarge ? Math.ceil((new Date(plannedDischarge).getTime() - Date.now()) / 86400000) : null;
+    const currentMood = feedbackRows?.[0]?.mood || null;
 
     return <PortalShell profile={profile}>
       <div className="patient-home-hero"><div><div className="section-kicker">Votre séjour aujourd’hui</div><h1>Bonjour, {profile.full_name.split(" ")[0]}</h1><p>Tout ce qui compte pour votre journée, sans avoir à chercher dans l’application.</p></div><Link className="button button-secondary" href="/portal/appointments">Voir tout mon planning</Link></div>
@@ -105,10 +113,14 @@ export default async function PortalPage() {
         {upcomingAbsence && <div className="patient-live-alert patient-live-alert--doctor"><strong>Votre médecin référent sera absent</strong><span>{referenceDoctor?.full_name} · {displayDateTime(upcomingAbsence.starts_at)} → {displayDateTime(upcomingAbsence.ends_at)}{replacement?.full_name ? ` · Relais : ${replacement.full_name}` : ""}</span></div>}
       </section>}
 
+      <section className="patient-next-actions"><div className="patient-section-head"><div><span>En un coup d’œil</span><h2>Mes 3 prochaines étapes</h2></div><Link href="/portal/appointments">Planning complet →</Link></div><div className="patient-next-list">{nextActions.length ? nextActions.map((item,index) => <div className="patient-next-row" key={`${item.type}-${index}`}><span>{index+1}</span><time>{displayTime(item.time)}</time><div><strong>{item.label}</strong><small>{item.type} · {item.meta}</small></div></div>) : <p className="empty">Rien à préparer pour le moment.</p>}</div></section>
+
       <section className="patient-day-grid">
         <div className="patient-day-card"><div className="patient-day-head"><div><span>Aujourd’hui</span><strong>{todayEvents.length} événement{todayEvents.length > 1 ? "s" : ""}</strong></div><Link href="/portal/appointments">Planning →</Link></div><div className="patient-day-list">{todayEvents.length ? todayEvents.map((item,index)=><div className="patient-day-event" key={`${item.type}-${index}`}><time>{displayTime(item.time)}</time><div><strong>{item.label}</strong><small>{item.type} · {item.meta}</small></div></div>) : <p className="empty">Rien de prévu pour le reste de la journée.</p>}</div></div>
         <div className="patient-day-card"><div className="patient-day-head"><div><span>Demain</span><strong>{tomorrowEvents.length} événement{tomorrowEvents.length > 1 ? "s" : ""}</strong></div><Link href="/portal/appointments">Voir →</Link></div><div className="patient-day-list">{tomorrowEvents.length ? tomorrowEvents.slice(0,5).map((item,index)=><div className="patient-day-event" key={`${item.type}-${index}`}><time>{displayTime(item.time)}</time><div><strong>{item.label}</strong><small>{item.type} · {item.meta}</small></div></div>) : <p className="empty">Aucun événement prévu pour demain.</p>}</div></div>
       </section>
+
+      {plannedDischarge && dischargeDays != null && dischargeDays <= 3 && dischargeDays >= 0 && <section className="patient-discharge-prep"><div><span className="section-kicker">Préparer ma sortie</span><h2>{dischargeDays === 0 ? "Votre sortie est prévue aujourd’hui" : `J-${dischargeDays} avant votre sortie`}</h2><p>Sortie prévue : <strong>{displayDateTime(plannedDischarge)}</strong></p></div><div className="patient-discharge-checklist"><span>✓ Vérifier vos affaires personnelles</span><span>✓ Anticiper votre transport</span><span>✓ Demander vos documents si nécessaire</span><span>✓ Vérifier que votre proche est informé si vous le souhaitez</span></div></section>}
 
       <section className="patient-glance-grid">
         {referenceDoctor && <div className="patient-glance-card"><span>🩺 Mon médecin référent</span><strong>{referenceDoctor.full_name}</strong><small>{referenceDoctor.specialty || "Médecin référent"}{replacement?.full_name ? ` · relais prévu : ${replacement.full_name}` : ""}</small></div>}
@@ -117,6 +129,9 @@ export default async function PortalPage() {
         {showVisits && <Link href="/portal/visits" className="patient-glance-card"><span>♧ Prochaine visite</span><strong>{nextVisit ? displayTime(nextVisit.scheduled_start) : "Aucune visite"}</strong><small>{nextVisit ? nextVisit.visitor_one_name : "Prévenir l’accueil d’une visite"}</small></Link>}
         <div className="patient-glance-card patient-glance-card--quote"><span>✦ Citation du jour</span><strong>“{quote}”</strong><small>Une petite respiration pour commencer la journée.</small></div>
       </section>
+
+      <PatientHelpCard />
+      <PatientDailyFeedback currentMood={currentMood} />
 
       <section className="patient-bulletin-card"><div><span className="section-kicker">Document administratif</span><h2>Besoin d’un bulletin de situation ?</h2><p>Un clic suffit. L’accueil reçoit la demande et prépare l’envoi vers votre adresse email enregistrée.</p></div><BulletinRequestButton pending={Boolean(bulletinRows?.length)} /></section>
 
@@ -131,7 +146,7 @@ export default async function PortalPage() {
       supabase.from("permission_requests").select("id, departure_at, return_at, reason, status, doctor_decision, manager_decision, departed_at, returned_at, patient:profiles!permission_requests_patient_id_fkey(full_name, phone)").in("status", ["submitted", "waiting", "approved", "departed"]).order("departure_at").limit(50),
       supabase.from("patient_stays").select("id, presence, room_number, ward:wards(name, floor), patient:profiles!patient_stays_patient_id_fkey(full_name, phone)").is("ended_at", null).order("room_number").limit(100),
       supabase.from("appointments").select("id, title, starts_at, location, patient:profiles!appointments_patient_id_fkey(full_name)").gte("starts_at", new Date().toISOString()).order("starts_at").limit(12),
-      supabase.from("doctor_rounds").select("id, floor_number, scheduled_at").eq("doctor_id", profile.id).gte("scheduled_at", new Date().toISOString()).order("starts_at").limit(8),
+      supabase.from("doctor_rounds").select("id, floor_number, scheduled_at").eq("doctor_id", profile.id).gte("scheduled_at", new Date().toISOString()).order("scheduled_at").limit(8),
       supabase.from("doctor_schedule_blocks").select("id, starts_at, ends_at").eq("doctor_id", profile.id).gte("ends_at", new Date().toISOString()).order("starts_at").limit(12),
     ]);
     return <PortalShell profile={profile}><StaffDashboard role="doctor" firstName={profile.full_name.split(" ")[0]} permissions={(permissions || []) as StaffPermission[]} stays={(stays || []) as StaffStay[]} appointments={(appointments || []) as StaffAppointment[]} doctorRounds={(doctorRounds || []) as DoctorRound[]} externalAppointments={(externalAppointments || []) as DoctorScheduleBlock[]} /></PortalShell>;
@@ -140,13 +155,20 @@ export default async function PortalPage() {
   const operationalRoles: OperationalRole[] = ["manager", "nurse", "reception"];
   if (operationalRoles.includes(profile.role as OperationalRole)) {
     const role = profile.role as OperationalRole;
-    const [{ data: permissions }, { data: stays }, { data: appointments }, { data: bulletins }] = await Promise.all([
+    const [{ data: permissions }, { data: stays }, { data: appointments }, { data: bulletins }, { data: receptionVisits }, { data: receptionTasks }, { data: helpRequests }, dischargesResult] = await Promise.all([
       supabase.from("permission_requests").select("id, departure_at, return_at, reason, status, doctor_decision, manager_decision, departed_at, returned_at, patient:profiles!permission_requests_patient_id_fkey(full_name, phone)").in("status", ["submitted", "waiting", "approved", "departed"]).order("departure_at").limit(50),
       supabase.from("patient_stays").select("id, presence, room_number, ward:wards(name, floor), patient:profiles!patient_stays_patient_id_fkey(full_name, phone)").is("ended_at", null).order("room_number").limit(100),
       supabase.from("appointments").select("id, title, starts_at, location, patient:profiles!appointments_patient_id_fkey(full_name)").gte("starts_at", new Date().toISOString()).order("starts_at").limit(12),
       role === "reception" ? supabase.from("bulletin_requests").select("id,status,requested_at,email_to,patient:profiles!bulletin_requests_patient_id_fkey(full_name)").in("status", ["pending", "generated"]).order("requested_at").limit(10) : Promise.resolve({ data: [] }),
+      role === "reception" ? supabase.from("visit_notifications").select("id,status,scheduled_start,visitor_one_name,patient:profiles!visit_notifications_patient_id_fkey(full_name)").in("status", ["scheduled", "arrived"]).order("scheduled_start").limit(20) : Promise.resolve({ data: [] }),
+      role === "reception" ? supabase.from("operational_tasks").select("id,title,due_at,patient:profiles!operational_tasks_patient_id_fkey(full_name)").eq("assigned_role", "reception").eq("status", "pending").order("due_at").limit(20) : Promise.resolve({ data: [] }),
+      role === "reception" ? supabase.from("patient_service_requests").select("id,category,message,created_at,patient:profiles!patient_service_requests_patient_id_fkey(full_name)").eq("status", "pending").order("created_at").limit(20) : Promise.resolve({ data: [] }),
+      role === "reception" ? supabase.rpc("discharge_planning_board") : Promise.resolve({ data: [] }),
     ]);
-    return <PortalShell profile={profile}>{role === "reception" && <section className="card" style={{ marginBottom: 18 }}><div className="card-header"><div><h2>Bulletins de situation à traiter</h2><p className="card-subtitle">Demandes envoyées directement par les patients.</p></div><span className="badge badge-warning">{bulletins?.length || 0}</span></div><div className="card-body">{bulletins?.length ? bulletins.map((item) => { const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient; return <div className="record-row" key={item.id}><div><strong>{patient?.full_name || "Patient"}</strong><small>{displayDateTime(item.requested_at)} · {item.email_to || "Email à compléter"}</small></div><BulletinReceptionActions requestId={item.id} status={item.status} /></div>; }) : <p className="empty">Aucune demande en attente.</p>}</div></section>}<StaffDashboard role={role} firstName={profile.full_name.split(" ")[0]} permissions={(permissions || []) as StaffPermission[]} stays={(stays || []) as StaffStay[]} appointments={(appointments || []) as StaffAppointment[]} /></PortalShell>;
+    return <PortalShell profile={profile}>
+      {role === "reception" && <ReceptionWorkQueue permissions={(permissions || []) as never[]} visits={(receptionVisits || []) as never[]} bulletins={(bulletins || []) as never[]} tasks={(receptionTasks || []) as never[]} discharges={(dischargesResult.data || []) as never[]} helpRequests={(helpRequests || []) as never[]} locale={profile.facility.locale} timezone={profile.facility.timezone} />}
+      <StaffDashboard role={role} firstName={profile.full_name.split(" ")[0]} permissions={(permissions || []) as StaffPermission[]} stays={(stays || []) as StaffStay[]} appointments={(appointments || []) as StaffAppointment[]} />
+    </PortalShell>;
   }
 
   const [{ count: pendingCount }, { count: approvedCount }, { count: departedCount }, { data: upcomingAppointments }] = await Promise.all([
