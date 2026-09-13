@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - stabilization/pilot-ready
+      - aurademo
 
 jobs:
   quality:
