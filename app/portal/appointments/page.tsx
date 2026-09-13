@@ -9,26 +9,136 @@ import { attendanceLabels, type AttendanceStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+type TimelineKind = "appointment" | "activity" | "doctor_round";
+type TimelineEvent = {
+  id: string;
+  kind: TimelineKind;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  location?: string | null;
+  detail?: string | null;
+  status?: string | null;
+};
+
+type ActivityEnrollment = {
+  id: string;
+  attendance_status: AttendanceStatus | null;
+  activity: { id: string; title: string; starts_at: string; ends_at: string; location: string | null } | { id: string; title: string; starts_at: string; ends_at: string; location: string | null }[] | null;
+};
+
+type DoctorRound = {
+  id: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  floor_number: number;
+  doctor: { full_name: string } | { full_name: string }[] | null;
+};
+
+function eventEndFromMinutes(startsAt: string, minutes: number) {
+  return new Date(new Date(startsAt).getTime() + minutes * 60_000).toISOString();
+}
+
+function conflictNames(event: TimelineEvent, allEvents: TimelineEvent[]) {
+  const start = new Date(event.startsAt).getTime();
+  const end = new Date(event.endsAt).getTime();
+  return allEvents
+    .filter((other) => other.id !== event.id && start < new Date(other.endsAt).getTime() && end > new Date(other.startsAt).getTime())
+    .map((other) => other.title);
+}
+
+const kindLabels: Record<TimelineKind, string> = {
+  appointment: "Rendez-vous",
+  activity: "Activité",
+  doctor_round: "Passage médecin",
+};
+
 export default async function AppointmentsPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
+  const now = new Date().toISOString();
 
   if (profile.role === "patient") {
-    const { data: appointments } = await supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes, attendance_status").eq("patient_id", profile.id).gte("ends_at", new Date().toISOString()).order("starts_at").limit(50);
+    const [{ data: appointments }, { data: enrollments }, { data: rounds }] = await Promise.all([
+      supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes, attendance_status").eq("patient_id", profile.id).gte("ends_at", now).order("starts_at").limit(50),
+      supabase.from("activity_enrollments").select("id,attendance_status,activity:activities!inner(id,title,starts_at,ends_at,location)").eq("patient_id", profile.id).gte("activity.ends_at", now).limit(50),
+      supabase.from("doctor_rounds").select("id,scheduled_at,duration_minutes,floor_number,doctor:profiles!doctor_rounds_doctor_id_fkey(full_name)").gte("scheduled_at", now).order("scheduled_at").limit(20),
+    ]);
+
+    const appointmentEvents: TimelineEvent[] = (appointments || []).map((item) => ({
+      id: `appointment-${item.id}`,
+      kind: "appointment",
+      title: item.title,
+      startsAt: item.starts_at,
+      endsAt: item.ends_at,
+      location: item.location,
+      detail: item.notes,
+      status: attendanceLabels[item.attendance_status as AttendanceStatus],
+    }));
+
+    const activityEvents: TimelineEvent[] = ((enrollments || []) as ActivityEnrollment[]).flatMap((item) => {
+      const activity = Array.isArray(item.activity) ? item.activity[0] : item.activity;
+      if (!activity) return [];
+      return [{
+        id: `activity-${item.id}`,
+        kind: "activity" as const,
+        title: activity.title,
+        startsAt: activity.starts_at,
+        endsAt: activity.ends_at,
+        location: activity.location,
+        detail: "Activité à laquelle vous êtes inscrit",
+        status: item.attendance_status ? attendanceLabels[item.attendance_status] : "Inscrit",
+      }];
+    });
+
+    const roundEvents: TimelineEvent[] = ((rounds || []) as DoctorRound[]).map((item) => {
+      const doctor = Array.isArray(item.doctor) ? item.doctor[0] : item.doctor;
+      return {
+        id: `round-${item.id}`,
+        kind: "doctor_round",
+        title: "Passage du médecin à l’étage",
+        startsAt: item.scheduled_at,
+        endsAt: eventEndFromMinutes(item.scheduled_at, item.duration_minutes || 30),
+        location: `Étage ${item.floor_number}`,
+        detail: doctor?.full_name ? `${doctor.full_name} · passage prévu` : "Passage médical prévu",
+        status: "Prévu",
+      };
+    });
+
+    const timeline = [...appointmentEvents, ...activityEvents, ...roundEvents].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    const conflicts = timeline.filter((event) => conflictNames(event, timeline).length > 0).length;
+
     return <PortalShell profile={profile}>
-      <div className="page-intro"><div><h1>Mon planning</h1><p>Vos rendez-vous à venir pendant le séjour.</p></div></div>
-      <section className="card"><div className="card-header"><div><h2>Rendez-vous</h2><p className="card-subtitle">Les modifications sont communiquées par le portail.</p></div></div><div className="card-body"><div className="list">{appointments?.length ? appointments.map((item) => <div className="list-row" key={item.id}><div className="time">{formatDateTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{item.location || "Lieu à confirmer"}{item.notes ? ` · ${item.notes}` : ""}</div></div><span className="badge badge-info">{attendanceLabels[item.attendance_status as AttendanceStatus]}</span></div>) : <p className="empty">Aucun rendez-vous n’est planifié pour le moment.</p>}</div></div></section>
+      <div className="page-intro"><div><div className="section-kicker">Agenda du séjour</div><h1>Mon planning</h1><p>Rendez-vous, activités inscrites et passages médicaux réunis dans une seule chronologie.</p></div></div>
+
+      <section className="planning-summary">
+        <div><span>Événements à venir</span><strong>{timeline.length}</strong></div>
+        <div><span>Activités inscrites</span><strong>{activityEvents.length}</strong></div>
+        <div><span>Passages médecin</span><strong>{roundEvents.length}</strong></div>
+        <div className={conflicts ? "planning-summary-alert" : ""}><span>Chevauchements</span><strong>{conflicts}</strong></div>
+      </section>
+
+      <section className="card"><div className="card-header"><div><h2>Planning unifié</h2><p className="card-subtitle">Un avertissement apparaît automatiquement lorsque deux événements se chevauchent.</p></div></div><div className="card-body">
+        <div className="planning-timeline">{timeline.length ? timeline.map((event) => {
+          const overlaps = conflictNames(event, timeline);
+          return <div className={`planning-event planning-event--${event.kind}${overlaps.length ? " planning-event--conflict" : ""}`} key={event.id}>
+            <div className="planning-event-time"><strong>{formatDateTime(event.startsAt)}</strong><small>→ {formatDateTime(event.endsAt)}</small></div>
+            <div className="planning-event-main"><div className="planning-event-title"><span className="planning-kind">{kindLabels[event.kind]}</span><strong>{event.title}</strong></div><div className="row-meta">{event.location || "Lieu à confirmer"}{event.detail ? ` · ${event.detail}` : ""}</div>{overlaps.length > 0 && <div className="planning-conflict"><strong>⚠ Chevauchement détecté</strong><span>Conflit avec : {overlaps.join(" · ")}</span></div>}</div>
+            <span className="badge badge-info">{event.status || "Prévu"}</span>
+          </div>;
+        }) : <p className="empty">Aucun événement n’est planifié pour le moment.</p>}</div>
+      </div></section>
     </PortalShell>;
   }
 
   if (!appointmentRoles.includes(profile.role)) redirect("/portal");
   const [{ data: patients }, { data: appointments }, { data: externalAppointments }] = await Promise.all([
     supabase.from("profiles").select("id, full_name").eq("role", "patient").eq("active", true).order("full_name"),
-    supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes, creator_id, attendance_status, patient:profiles!appointments_patient_id_fkey(full_name)").gte("ends_at", new Date().toISOString()).order("starts_at").limit(80),
-    profile.role === "doctor" ? supabase.from("doctor_schedule_blocks").select("id, starts_at, ends_at").eq("doctor_id", profile.id).gte("ends_at", new Date().toISOString()).order("starts_at") : Promise.resolve({ data: [] }),
+    supabase.from("appointments").select("id, title, starts_at, ends_at, location, notes, creator_id, attendance_status, patient:profiles!appointments_patient_id_fkey(full_name)").gte("ends_at", now).order("starts_at").limit(80),
+    profile.role === "doctor" ? supabase.from("doctor_schedule_blocks").select("id, starts_at, ends_at").eq("doctor_id", profile.id).gte("ends_at", now).order("starts_at") : Promise.resolve({ data: [] }),
   ]);
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><h1>Planning des patients</h1><p>Ajoutez des rendez-vous visibles immédiatement dans le planning du patient.</p></div></div>
+    <div className="page-intro"><div><h1>Planning des patients</h1><p>Ajoutez des rendez-vous visibles immédiatement dans le planning du patient. Les activités inscrites et les passages d’étage sont désormais intégrés au planning patient.</p></div></div>
     <div className="dashboard-grid"><section className="card"><div className="card-header"><div><h2>Rendez-vous à venir</h2><p className="card-subtitle">Validez la présence après le créneau.</p></div></div><div className="card-body"><div className="list">{appointments?.length ? appointments.map((item) => { const patient = Array.isArray(item.patient) ? item.patient[0] : item.patient; const canMark = item.creator_id === profile.id || profile.role === "admin"; return <div className="list-row" key={item.id}><div className="time">{formatDateTime(item.starts_at)}</div><div><div className="row-title">{item.title}</div><div className="row-meta">{patient?.full_name || "Patient"} · {item.location || "Lieu à confirmer"}{item.notes ? ` · ${item.notes}` : ""}</div></div><span className="badge badge-info">{attendanceLabels[item.attendance_status as AttendanceStatus]}</span>{canMark && <AttendanceActions kind="appointment" recordId={item.id} />}</div>; }) : <p className="empty">Aucun rendez-vous à venir.</p>}</div>{profile.role === "doctor" && <div className="external-appointments"><div className="external-appointments-head"><div><p className="section-kicker">Créneaux privés</p><h2>RDV externes</h2></div><span>Sans détail patient</span></div>{externalAppointments?.length ? externalAppointments.map((item) => <div className="timeline-row timeline-row--external" key={item.id}><time>{formatDateTime(item.starts_at)}</time><div><strong>RDV externe</strong><small>Créneau réservé jusqu&apos;au {formatDateTime(item.ends_at)}</small></div></div>) : <p className="empty">Aucun créneau externe à venir.</p>}</div>}</div></section><aside className="card"><div className="card-header"><div><h2>Nouveau rendez-vous</h2><p className="card-subtitle">Les champs marqués sont obligatoires.</p></div></div><div className="card-body"><AppointmentForm patients={patients || []} /></div></aside></div>
   </PortalShell>;
 }
