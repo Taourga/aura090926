@@ -15,7 +15,7 @@ const navItems: NavItem[] = [
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/patients", label: "Patients", icon: "◎", roles: ["doctor"] },
-  { href: "/portal/contacts", label: "Contacts patients", icon: "☎", roles: ["doctor", "manager", "nurse", "psychologist", "provider"] },
+  { href: "/portal/contacts", label: "Contacts & proche", icon: "☎", roles: ["patient", "doctor", "manager", "nurse", "psychologist", "provider", "admin"] },
   { href: "/portal/permissions", label: "Permissions", icon: "✓", feature: "permissions", hiddenFor: ["technical", "governance", "trusted_contact"] },
   { href: "/portal/appointments", label: "Planning", icon: "◷", roles: ["patient", "doctor", "manager", "psychologist", "nurse", "provider"] },
   { href: "/portal/activities", label: "Activités", icon: "✦", feature: "activities", hiddenFor: ["doctor", "technical", "trusted_contact"] },
