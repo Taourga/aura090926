@@ -10,6 +10,7 @@ import "./operations.css";
 import "./final-demo-polish.css";
 import "./final-demo-patch.css";
 import "./hotfix-ux.css";
+import "./reception-simplify.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
