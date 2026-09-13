@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { UserEditor } from "@/components/user-editor";
@@ -33,7 +34,15 @@ export default async function AdminPage() {
   });
 
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><h1>Administration · {profile.facility.name}</h1><p>Pilotage de l’établissement, Country Pack, comptes et règles métier.</p></div></div>
+    <div className="page-intro admin-intro"><div><span className="section-kicker">Configuration établissement</span><h1>Administration · {profile.facility.name}</h1><p>Gérez les accès, les invitations, les modules et les règles de fonctionnement de la clinique.</p></div><div className="page-intro-actions"><Link href="/portal/pulse" className="button button-secondary">Voir l’activité</Link><Link href="/portal/roi" className="button button-primary">Pilotage ROI</Link></div></div>
+
+    <nav className="admin-shortcuts" aria-label="Raccourcis administration">
+      <Link href="/portal/stays"><strong>Séjours</strong><span>Admissions, chambres et présence</span></Link>
+      <Link href="/portal/discharges"><strong>Sorties</strong><span>Suivi des sorties à préparer</span></Link>
+      <Link href="/portal/housekeeping"><strong>Hôtellerie</strong><span>Chambres et tâches opérationnelles</span></Link>
+      <a href="#users"><strong>Utilisateurs</strong><span>Rôles et accès</span></a>
+    </nav>
+
     <div className="metric-grid">
       <div className="metric"><span>Utilisateurs</span><strong>{users.filter((item) => item.active).length}</strong><div className="metric-detail">Membres actifs de cette clinique</div></div>
       <div className="metric"><span>Permissions</span><strong>{permissions || 0}</strong><div className="metric-detail">Historique de cette clinique</div></div>
@@ -44,6 +53,6 @@ export default async function AdminPage() {
 
     <FacilityAdminPanel profile={profile} />
 
-    <section className="card" style={{ marginTop: 18 }}><div className="card-header"><div><h2>Utilisateurs et rôles</h2><p className="card-subtitle">Le rôle est propre à {profile.facility.name}. Un même compte peut avoir un autre rôle dans une autre clinique.</p></div></div><div className="card-body data-table-wrap"><table className="data-table"><thead><tr><th>Utilisateur</th><th>Rôle dans cette clinique</th><th>Accès</th><th>Action</th></tr></thead><tbody>{users.length ? users.map((user) => <UserEditor key={user.id} user={user} />) : <tr><td className="empty" colSpan={4}>Aucun utilisateur.</td></tr>}</tbody></table></div></section>
+    <section id="users" className="card" style={{ marginTop: 18 }}><div className="card-header"><div><h2>Utilisateurs et rôles</h2><p className="card-subtitle">Le rôle est propre à {profile.facility.name}. Un même compte peut avoir un autre rôle dans une autre clinique.</p></div></div><div className="card-body data-table-wrap"><table className="data-table"><thead><tr><th>Utilisateur</th><th>Rôle dans cette clinique</th><th>Accès</th><th>Action</th></tr></thead><tbody>{users.length ? users.map((user) => <UserEditor key={user.id} user={user} />) : <tr><td className="empty" colSpan={4}>Aucun utilisateur pour le moment.</td></tr>}</tbody></table></div></section>
   </PortalShell>;
 }
