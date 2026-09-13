@@ -15,12 +15,13 @@ type FreeSchedule={schedule_date:string;opens_at:string;closes_at:string;note:st
 type Directory={id:string;full_name:string;member_type:string;specialty:string|null;user_id:string|null};
 type Facilitator={activity_id:string;clinician_id:string;is_primary:boolean};
 type Update={activity_id:string;update_type:string;message:string;created_at:string};
-function addDays(date:Date,amount:number){const copy=new Date(date);copy.setDate(copy.getDate()+amount);return copy.toISOString().slice(0,10)}
+function localDateKey(date:Date,timezone:string){return new Intl.DateTimeFormat("en-CA",{timeZone:timezone,year:"numeric",month:"2-digit",day:"2-digit"}).format(date)}
+function addDays(key:string,amount:number){const date=new Date(`${key}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+amount);return date.toISOString().slice(0,10)}
 function displayTime(value:string){return value.slice(0,5).replace(":"," h ")}
 
 export default async function ActivitiesPage({searchParams}:{searchParams:Promise<{section?:string}>}){
   const {section}=await searchParams; const showFree=section==="free"; const profile=await requireProfile(); const supabase=await createClient();
-  const today=new Date(); const startDate=today.toISOString().slice(0,10); const endDate=addDays(today,6);
+  const startDate=localDateKey(new Date(),profile.facility.timezone); const endDate=addDays(startDate,6);
   const [{data:activities},{data:enrollments},{data:enrollmentCounts},{data:freeData},{data:facilitatorRows},{data:directoryRows},{data:updateRows}]=await Promise.all([
     supabase.from("activities").select("id,title,description,starts_at,ends_at,location,capacity,active").eq("active",true).gte("ends_at",new Date().toISOString()).order("starts_at").limit(40),
     supabase.from("activity_enrollments").select("id,activity_id,patient_id,attendance_status,patient:profiles!activity_enrollments_patient_id_fkey(full_name)"),
@@ -31,10 +32,9 @@ export default async function ActivitiesPage({searchParams}:{searchParams:Promis
     supabase.from("activity_updates").select("activity_id,update_type,message,created_at").order("created_at",{ascending:false}).limit(100),
   ]);
   const enrollmentList=enrollments||[]; const countByActivity=new Map(((enrollmentCounts||[]) as {activity_id:string;enrolled_count:number|string}[]).map(i=>[i.activity_id,Number(i.enrolled_count)]));
-  const freeSchedules=(freeData||[]) as FreeSchedule[]; const freeByDate=new Map(freeSchedules.map(s=>[s.schedule_date,s])); const days=Array.from({length:7},(_,i)=>addDays(today,i));
+  const freeSchedules=(freeData||[]) as FreeSchedule[]; const freeByDate=new Map(freeSchedules.map(s=>[s.schedule_date,s])); const days=Array.from({length:7},(_,i)=>addDays(startDate,i));
   const directory=new Map(((directoryRows||[]) as Directory[]).map(i=>[i.id,i])); const facilitators=(facilitatorRows||[]) as Facilitator[]; const updates=(updateRows||[]) as Update[];
   const canManageActivities=profile.role==="governance"||profile.role==="admin"; const canManageFree=profile.role==="coach"||profile.role==="admin"; const canMarkAttendance=["manager","psychologist","provider","governance","coach","nurse","admin"].includes(profile.role);
-  const myEnrollments=profile.role==="patient"?enrollmentList.filter(e=>e.patient_id===profile.id):[];
 
   return <PortalShell profile={profile}>
     <div className="page-intro"><div><div className="section-kicker">Bien-être & vie du séjour</div><h1>Activités</h1><p>{profile.role==="patient"?"Inscrivez-vous en un clic. Pour chaque activité, vous savez où aller et avec qui.":"Gérez les activités et informez immédiatement les patients concernés."}</p></div>{profile.role==="patient"&&<Link className="button button-secondary" href="/portal/appointments">Voir dans mon planning</Link>}</div>
