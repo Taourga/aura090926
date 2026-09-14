@@ -70,9 +70,10 @@ async function loadActivePatientContacts(facilityId: string): Promise<Contact[]>
     .sort((a, b) => a.full_name.localeCompare(b.full_name, "fr"));
 }
 
-export default async function MessagesPage() {
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ contact?: string }> }) {
   const profile = await requireProfile();
   if (!messagingRoles.includes(profile.role)) redirect("/portal");
+  const { contact: requestedContactId } = await searchParams;
   const supabase = await createClient();
 
   const { data: messages } = await supabase
@@ -95,9 +96,11 @@ export default async function MessagesPage() {
     }
   }
 
+  const initialSelectedId = requestedContactId && contacts.some((contact) => contact.id === requestedContactId) ? requestedContactId : null;
+  const selectedContact = initialSelectedId ? contacts.find((contact) => contact.id === initialSelectedId) : null;
   const isPatient = profile.role === "patient";
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><h1>{isPatient ? "Messagerie patient" : "Messagerie d’équipe"}</h1><p>{isPatient ? "Échangez directement avec votre équipe soignante pendant votre séjour." : "Échanges privés et tracés entre l’équipe soignante et les patients autorisés."}</p></div></div>
-    <ClinicalMessenger currentUserId={profile.id} contacts={contacts} initialMessages={messages || []} isPatient={isPatient} />
+    <div className="page-intro"><div><h1>{isPatient ? "Messagerie patient" : selectedContact?.role === "patient" ? `Conversation · ${selectedContact.full_name}` : "Messagerie d’équipe"}</h1><p>{isPatient ? "Échangez directement avec votre équipe soignante pendant votre séjour." : selectedContact?.role === "patient" ? "Le patient sélectionné est déjà ouvert : vous pouvez écrire directement." : "Échanges privés et tracés entre l’équipe soignante et les patients autorisés."}</p></div></div>
+    <ClinicalMessenger currentUserId={profile.id} contacts={contacts} initialMessages={messages || []} isPatient={isPatient} initialSelectedId={initialSelectedId} />
   </PortalShell>;
 }
