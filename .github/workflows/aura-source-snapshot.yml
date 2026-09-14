@@ -26,25 +26,13 @@ jobs:
           set -euo pipefail
           mkdir -p snapshot
           git archive --format=zip --output="snapshot/AURA_SOURCE_${GITHUB_SHA}.zip" HEAD
+          sha256sum "snapshot/AURA_SOURCE_${GITHUB_SHA}.zip" > snapshot/SHA256SUMS.txt
           printf '%s\n' "$GITHUB_SHA" > snapshot/COMMIT.txt
-
-      - name: Fetch encrypted Supabase snapshots
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --location "https://yksbenmcqlchnvwyeody.supabase.co/functions/v1/aura-backup-export?id=public_data" --output snapshot/public_data_snapshot.pgp
-          curl --fail --silent --show-error --location "https://yksbenmcqlchnvwyeody.supabase.co/functions/v1/aura-backup-export?id=auth_manifest" --output snapshot/auth_users_manifest.pgp
-
-      - name: Checksums
-        shell: bash
-        run: |
-          set -euo pipefail
-          sha256sum snapshot/AURA_SOURCE_*.zip snapshot/public_data_snapshot.pgp snapshot/auth_users_manifest.pgp > snapshot/SHA256SUMS.txt
 
       - name: Upload snapshot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aura-full-snapshot
+          name: aura-source-snapshot
           path: snapshot/
           if-no-files-found: error
           retention-days: 30
