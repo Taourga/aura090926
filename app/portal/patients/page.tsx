@@ -79,7 +79,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
         {selected ? <>
           <div className="doctor-simple-header">
             <div><span className="section-kicker">Fiche patient</span><h2>{selected.full_name}</h2><p>Chambre {stay?.room_number || "—"} · {stay?.presence === "out" ? "Hors établissement" : "Présent"}</p></div>
-            <div className="doctor-simple-actions"><Link className="button button-primary button-small" href="/portal/messages">✉ Message</Link><Link className="button button-secondary button-small" href="/portal/appointments">Planning</Link></div>
+            <div className="doctor-simple-actions"><Link className="button button-primary button-small" href={`/portal/messages?contact=${selected.id}`}>✉ Message</Link><Link className="button button-secondary button-small" href={`/portal/appointments?patient=${selected.id}`}>Planning</Link></div>
           </div>
 
           <div className="doctor-simple-kpis">
@@ -102,12 +102,12 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
             </article>
 
             <article className="doctor-simple-card">
-              <div className="doctor-simple-card-head"><h3>Prochainement</h3><Link href="/portal/appointments">Voir tout →</Link></div>
+              <div className="doctor-simple-card-head"><h3>Prochainement</h3><Link href={`/portal/appointments?patient=${selected.id}`}>Voir tout →</Link></div>
               {appointmentList.length ? appointmentList.slice(0,3).map((a)=><div className="doctor-simple-row" key={a.id}><strong>{a.title}</strong><span>{formatDateTime(a.starts_at)} · {a.location || "Lieu à confirmer"}</span></div>) : <span>Aucun rendez-vous à venir.</span>}
             </article>
 
             <article className="doctor-simple-card">
-              <div className="doctor-simple-card-head"><h3>Permissions</h3><Link href="/portal/permissions">Traiter →</Link></div>
+              <div className="doctor-simple-card-head"><h3>Permissions</h3><Link href={`/portal/permissions?patient=${selected.id}`}>Traiter →</Link></div>
               {permissionList.length ? permissionList.slice(0,3).map((p)=><div className="doctor-simple-row" key={p.id}><div><strong>{formatDateTime(p.departure_at)}</strong><span>Retour {formatDateTime(p.return_at)}</span></div><StatusBadge status={p.status as PermissionStatus} /></div>) : <span>Aucune permission.</span>}
             </article>
           </div>
