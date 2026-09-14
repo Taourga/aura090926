@@ -22,6 +22,7 @@ export default function HomePage() {
         <nav className="public-nav" aria-label="Navigation publique">
           <a href="#solution">Solution</a>
           <a href="#fonctionnement">Fonctionnement</a>
+          <Link href="/demo">Démo</Link>
           <Link className="button button-primary" href="/login">Se connecter</Link>
         </nav>
       </header>
@@ -33,7 +34,7 @@ export default function HomePage() {
           <p className="hero-lead">AURA relie le patient, les soignants, l’accueil et les équipes opérationnelles dans un même parcours : planning, permissions, présence, visites, activités et informations utiles.</p>
           <div className="hero-actions">
             <Link className="button button-primary button-large" href="/login">Accéder à AURA</Link>
-            <a className="button button-secondary button-large" href="#solution">Voir comment ça marche</a>
+            <Link className="button button-secondary button-large" href="/demo">Voir la démo guidée</Link>
           </div>
           <div className="market-chips" aria-label="Marchés AURA">
             <span>AURA Core</span><span>France</span><span>Algérie</span><span>Multi-établissements</span>
