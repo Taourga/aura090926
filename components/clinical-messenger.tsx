@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { markClinicalMessagesRead, sendClinicalMessage } from "@/app/portal/messages/actions";
 import { ActionFeedback } from "@/components/action-feedback";
@@ -18,16 +18,27 @@ const roleLabel: Record<ContactRole, string> = {
 };
 const priorityLabel: Record<number, string> = { 1: "Normal", 2: "Important", 3: "Critique" };
 
-export function ClinicalMessenger({ currentUserId, contacts, initialMessages, isPatient = false }: { currentUserId: string; contacts: Contact[]; initialMessages: Message[]; isPatient?: boolean }) {
+export function ClinicalMessenger({ currentUserId, contacts, initialMessages, isPatient = false, initialSelectedId }: { currentUserId: string; contacts: Contact[]; initialMessages: Message[]; isPatient?: boolean; initialSelectedId?: string | null }) {
   const router = useRouter();
-  const [selectedId, setSelectedId] = useState(() => contacts.find((contact) => initialMessages.some((message) => message.sender_id === contact.id && !message.read_at))?.id || contacts[0]?.id || "");
+  const [selectedId, setSelectedId] = useState(() => {
+    if (initialSelectedId && contacts.some((contact) => contact.id === initialSelectedId)) return initialSelectedId;
+    return contacts.find((contact) => initialMessages.some((message) => message.sender_id === contact.id && !message.read_at))?.id || contacts[0]?.id || "";
+  });
   const [feedback, setFeedback] = useState<{ error?: string; success?: string }>({});
   const [loading, setLoading] = useState(false);
   const messages = useMemo(() => initialMessages.filter((message) => (message.sender_id === selectedId && message.recipient_id === currentUserId) || (message.sender_id === currentUserId && message.recipient_id === selectedId)), [currentUserId, initialMessages, selectedId]);
   const selected = contacts.find((contact) => contact.id === selectedId);
 
+  useEffect(() => {
+    if (!selectedId || !initialMessages.some((message) => message.sender_id === selectedId && !message.read_at)) return;
+    let active = true;
+    void markClinicalMessagesRead(selectedId).then(() => { if (active) router.refresh(); });
+    return () => { active = false; };
+  }, [initialMessages, router, selectedId]);
+
   async function selectContact(id: string) {
     setSelectedId(id); setFeedback({});
+    if (typeof window !== "undefined") window.history.replaceState(null, "", `/portal/messages?contact=${encodeURIComponent(id)}`);
     if (initialMessages.some((message) => message.sender_id === id && !message.read_at)) {
       await markClinicalMessagesRead(id); router.refresh();
     }
