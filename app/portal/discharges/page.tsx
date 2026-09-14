@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { DischargeForm } from "@/components/stay-planning";
@@ -27,20 +28,33 @@ type TaskRow = {
   status: string;
 };
 
+type StayRef = { id: string; patient_id: string };
+
 const allowed = ["doctor", "nurse", "manager", "governance", "technical", "admin", "reception"];
+const patientMessagingRoles = ["doctor", "nurse", "manager"];
 const roleLabel: Record<string, string> = { reception: "Accueil", governance: "Gouvernance", technical: "Technique", nurse: "Infirmier" };
 
-export default async function DischargesPage() {
+export default async function DischargesPage({ searchParams }: { searchParams: Promise<{ patient?: string }> }) {
   const profile = await requireProfile();
   if (!allowed.includes(profile.role)) redirect("/portal");
+  const { patient: requestedPatientId } = await searchParams;
   const supabase = await createClient();
-  const [{ data, error }, { data: taskData }] = await Promise.all([
+  const [{ data, error }, { data: taskData }, { data: stayRefsData }] = await Promise.all([
     supabase.rpc("discharge_planning_board"),
     supabase.from("operational_tasks").select("id,stay_id,title,assigned_role,due_at,status").like("task_code", "discharge_%").neq("status", "cancelled").order("due_at"),
+    supabase.from("patient_stays").select("id,patient_id").is("ended_at", null),
   ]);
-  const rows = (data || []) as DischargeRow[];
-  const tasks = (taskData || []) as TaskRow[];
+  const allRows = (data || []) as DischargeRow[];
+  const allTasks = (taskData || []) as TaskRow[];
+  const stayRefs = (stayRefsData || []) as StayRef[];
+  const patientByStay = new Map(stayRefs.map((stay) => [stay.id, stay.patient_id]));
+  const availablePatientIds = new Set(stayRefs.map((stay) => stay.patient_id));
+  const selectedPatientId = requestedPatientId && availablePatientIds.has(requestedPatientId) ? requestedPatientId : undefined;
+  const rows = selectedPatientId ? allRows.filter((row) => patientByStay.get(row.stay_id) === selectedPatientId) : allRows;
+  const tasks = selectedPatientId ? allTasks.filter((task) => !!task.stay_id && patientByStay.get(task.stay_id) === selectedPatientId) : allTasks;
+  const selectedPatientName = selectedPatientId ? rows[0]?.patient_name || "Patient sélectionné" : null;
   const canEdit = ["doctor", "nurse", "admin"].includes(profile.role);
+  const canMessagePatient = !!selectedPatientId && patientMessagingRoles.includes(profile.role);
   const fmt = (value: string | null | undefined) => formatDateTime(value, profile.facility.locale, profile.facility.timezone);
   const planned = rows.filter((r) => r.planned_discharge_at);
   const unplanned = rows.filter((r) => !r.planned_discharge_at);
@@ -50,17 +64,17 @@ export default async function DischargesPage() {
   tasks.forEach((task) => { if (!task.stay_id) return; const current = tasksByStay.get(task.stay_id) || []; current.push(task); tasksByStay.set(task.stay_id, current); });
 
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><div className="section-kicker">Fin d’hospitalisation</div><h1>Sorties prévues</h1><p>{canEdit ? "Renseignez une seule date : AURA prévient les équipes et génère automatiquement les tâches de préparation." : "Chaque service voit ce qu’il doit préparer, sans recopier la date de sortie."}</p></div></div>
+    <div className="page-intro"><div><div className="section-kicker">Fin d’hospitalisation</div><h1>{selectedPatientName ? `Sortie · ${selectedPatientName}` : "Sorties prévues"}</h1><p>{selectedPatientName ? "Toutes les actions de sortie de ce patient sont regroupées ici." : canEdit ? "Renseignez une seule date : AURA prévient les équipes et génère automatiquement les tâches de préparation." : "Chaque service voit ce qu’il doit préparer, sans recopier la date de sortie."}</p></div>{selectedPatientId && <div className="page-intro-actions"><Link className="button button-secondary" href="/portal/discharges">Toutes les sorties</Link>{profile.role === "doctor" && <Link className="button button-secondary" href={`/portal/patients?patient=${selectedPatientId}`}>Fiche patient</Link>}{canMessagePatient && <Link className="button button-primary" href={`/portal/messages?contact=${selectedPatientId}`}>Message</Link>}</div>}</div>
 
     <section className="metric-grid" style={{ marginBottom: 18 }}>
-      <div className="metric"><strong>{rows.length}</strong><span>Séjours actifs</span></div>
+      <div className="metric"><strong>{rows.length}</strong><span>{selectedPatientId ? "Séjour" : "Séjours actifs"}</span></div>
       <div className="metric"><strong>{planned.length}</strong><span>Sorties prévues</span></div>
       <div className="metric"><strong>{pendingTasks.length}</strong><span>Tâches à préparer</span></div>
       <div className="metric"><strong>{doneTasks.length}</strong><span>Tâches terminées</span></div>
     </section>
 
     <section className="card">
-      <div className="card-header"><div><h2>Planning de sortie orchestré</h2><p className="card-subtitle">La date est saisie une fois ; Accueil, Gouvernance, Technique et Infirmier reçoivent leurs actions.</p></div></div>
+      <div className="card-header"><div><h2>{selectedPatientId ? "Préparation de la sortie" : "Planning de sortie orchestré"}</h2><p className="card-subtitle">La date est saisie une fois ; Accueil, Gouvernance, Technique et Infirmier reçoivent leurs actions.</p></div></div>
       <div className="card-body discharge-orchestration-list">
         {error ? <p role="alert">Le planning de sortie n’a pas pu être chargé.</p> : rows.length ? rows.map((row) => {
           const rowTasks = tasksByStay.get(row.stay_id) || [];
@@ -72,7 +86,7 @@ export default async function DischargesPage() {
               return <div className={`discharge-task ${task.status === "done" ? "discharge-task--done" : ""}`} key={task.id}><div><span>{roleLabel[task.assigned_role] || task.assigned_role}</span><strong>{task.title}</strong><small>{task.due_at ? `Échéance ${fmt(task.due_at)}` : ""}</small></div><div>{task.status === "done" ? <span className="badge badge-success">Terminé</span> : canAct ? <OperationalTaskButton taskId={task.id} /> : <span className="badge badge-warning">À faire</span>}</div></div>;
             }) : <p className="empty">Les tâches opérationnelles seront créées automatiquement.</p>}</div>}
           </article>;
-        }) : <p className="empty">Aucun séjour actif.</p>}
+        }) : <p className="empty">{selectedPatientId ? "Aucun séjour actif pour ce patient." : "Aucun séjour actif."}</p>}
       </div>
     </section>
 
