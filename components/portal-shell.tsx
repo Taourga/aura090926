@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { FacilitySwitcher } from "@/components/facility-switcher";
 import { MessageBell } from "@/components/message-bell";
 import { AuraCopy } from "@/components/aura-copy";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 
 type NavItem = { href: string; label: string; icon: string; feature?: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
 
@@ -35,7 +36,7 @@ const navItems: NavItem[] = [
 
 const primaryRoutes: Record<string, string[]> = {
   patient: ["/portal", "/portal/appointments", "/portal/permissions", "/portal/messages"],
-  doctor: ["/portal", "/portal/patients", "/portal/appointments", "/portal/permissions"],
+  doctor: ["/portal", "/portal/messages", "/portal/appointments", "/portal/permissions"],
   manager: ["/portal", "/portal/pulse", "/portal/impact", "/portal/permissions"],
   nurse: ["/portal", "/portal/handoff", "/portal/appointments", "/portal/messages"],
   reception: ["/portal", "/portal/stays", "/portal/permissions", "/portal/visits"],
@@ -132,6 +133,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const helpLabel = profile.role === "admin" ? "Configurer" : helpHref === "/portal/information" ? "Aide & infos" : "Retour accueil";
 
   return <div className="portal portal-simplified">
+    <RealtimeRefresh />
     <a className="skip-link" href="#main-content">Aller au contenu</a>
     <aside className="sidebar">
       <Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand" aria-label="Accueil AURA"><span className="brand-mark">A</span><span>AURA</span></Link>
