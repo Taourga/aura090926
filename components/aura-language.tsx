@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Locale = "fr" | "en" | "ar" | "zh" | "tr";
+type Translation = Record<Exclude<Locale, "fr">, string>;
 
 const locales: Array<{ code: Locale; label: string; native: string }> = [
   { code: "fr", label: "Français", native: "FR" },
@@ -12,7 +13,7 @@ const locales: Array<{ code: Locale; label: string; native: string }> = [
   { code: "tr", label: "Türkçe", native: "TR" },
 ];
 
-const common: Record<string, Record<Exclude<Locale, "fr">, string>> = {
+const t: Record<string, Translation> = {
   "Accueil": { en: "Home", ar: "الرئيسية", zh: "首页", tr: "Ana sayfa" },
   "AURA Pulse": { en: "AURA Pulse", ar: "AURA Pulse", zh: "AURA Pulse", tr: "AURA Pulse" },
   "Relève": { en: "Handover", ar: "تسليم المناوبة", zh: "交接班", tr: "Devir teslim" },
@@ -49,7 +50,6 @@ const common: Record<string, Record<Exclude<Locale, "fr">, string>> = {
   "Patient": { en: "Patient", ar: "مريض", zh: "患者", tr: "Hasta" },
   "Médecin": { en: "Doctor", ar: "طبيب", zh: "医生", tr: "Doktor" },
   "Cadre": { en: "Manager", ar: "إطار إداري", zh: "管理人员", tr: "Yönetici" },
-  "Accueil": { en: "Reception", ar: "الاستقبال", zh: "接待", tr: "Resepsiyon" },
   "Psychologue": { en: "Psychologist", ar: "أخصائي نفسي", zh: "心理医生", tr: "Psikolog" },
   "Gouvernance": { en: "Governance", ar: "الحوكمة", zh: "治理", tr: "Yönetişim" },
   "Personnel technique": { en: "Technical staff", ar: "الطاقم التقني", zh: "技术人员", tr: "Teknik personel" },
@@ -71,23 +71,16 @@ const common: Record<string, Record<Exclude<Locale, "fr">, string>> = {
   "Enregistrer et accéder à mon espace": { en: "Save and open my space", ar: "حفظ والدخول إلى مساحتي", zh: "保存并进入我的空间", tr: "Kaydet ve alanıma git" },
   "Retour à la connexion": { en: "Back to sign in", ar: "العودة لتسجيل الدخول", zh: "返回登录", tr: "Girişe dön" },
   "Recevoir un lien": { en: "Send me a link", ar: "إرسال الرابط", zh: "发送链接", tr: "Bağlantı gönder" },
-
   "AURA Impact · Démonstration": { en: "AURA Impact · Demo", ar: "AURA Impact · عرض تجريبي", zh: "AURA Impact · 演示", tr: "AURA Impact · Demo" },
   "Mesurer l’impact positif du parcours numérique": { en: "Measure the positive impact of the digital patient journey", ar: "قياس الأثر الإيجابي للمسار الرقمي", zh: "衡量数字化患者旅程的积极影响", tr: "Dijital hasta yolculuğunun olumlu etkisini ölçün" },
   "AURA Impact transforme les usages numériques de l’établissement en indicateurs simples de dématérialisation et d’impact environnemental.": { en: "AURA Impact turns the facility’s digital usage into clear indicators for paperless processes and environmental impact.", ar: "يحوّل AURA Impact الاستخدامات الرقمية للمؤسسة إلى مؤشرات واضحة للرقمنة والأثر البيئي.", zh: "AURA Impact 将机构的数字化使用情况转化为无纸化和环境影响的清晰指标。", tr: "AURA Impact, kurumun dijital kullanımını kağıtsız süreçler ve çevresel etki için anlaşılır göstergelere dönüştürür." },
   "Indice de maturité numérique responsable": { en: "Responsible digital maturity index", ar: "مؤشر النضج الرقمي المسؤول", zh: "负责任数字成熟度指数", tr: "Sorumlu dijital olgunluk endeksi" },
   "Données de démonstration": { en: "Demo data", ar: "بيانات تجريبية", zh: "演示数据", tr: "Demo verileri" },
-  "Les valeurs ci-dessous sont fictives et servent uniquement à illustrer le potentiel du module. Les estimations CO₂e ne constituent pas un bilan carbone certifié.": { en: "The values below are fictitious and only illustrate the module’s potential. CO₂e estimates are not a certified carbon assessment.", ar: "القيم أدناه افتراضية وتهدف فقط إلى توضيح إمكانات الوحدة. تقديرات مكافئ ثاني أكسيد الكربون ليست تقييماً كربونياً معتمداً.", zh: "以下数值为演示数据，仅用于展示模块潜力。CO₂e 估算不构成经认证的碳核算。", tr: "Aşağıdaki değerler kurgusaldır ve yalnızca modülün potansiyelini gösterir. CO₂e tahminleri sertifikalı bir karbon bilançosu değildir." },
   "DOCUMENTS NUMÉRIQUES": { en: "DIGITAL DOCUMENTS", ar: "المستندات الرقمية", zh: "数字文档", tr: "DİJİTAL BELGELER" },
   "PAGES ÉVITÉES · EST.": { en: "PAGES AVOIDED · EST.", ar: "صفحات تم تجنبها · تقديري", zh: "减少纸张页数 · 估算", tr: "ÖNLENEN SAYFALAR · TAH." },
   "ÉCHANGES NUMÉRIQUES": { en: "DIGITAL INTERACTIONS", ar: "التفاعلات الرقمية", zh: "数字互动", tr: "DİJİTAL ETKİLEŞİMLER" },
   "DÉPLACEMENTS ÉVITÉS · EST.": { en: "TRIPS AVOIDED · EST.", ar: "تنقلات تم تجنبها · تقديري", zh: "减少出行 · 估算", tr: "ÖNLENEN YOLCULUKLAR · TAH." },
   "CO₂e ÉVITÉ · EST.": { en: "CO₂e AVOIDED · EST.", ar: "مكافئ CO₂ المتجنب · تقديري", zh: "减少 CO₂e · 估算", tr: "ÖNLENEN CO₂e · TAH." },
-  "interactions documentaires dématérialisées": { en: "paperless document interactions", ar: "تفاعلات مستندية رقمية", zh: "无纸化文档互动", tr: "kağıtsız belge etkileşimi" },
-  "selon l’hypothèse de démonstration": { en: "based on the demo assumption", ar: "وفق فرضية العرض التجريبي", zh: "基于演示假设", tr: "demo varsayımına göre" },
-  "notifications et échanges AURA": { en: "AURA notifications and interactions", ar: "إشعارات وتفاعلات AURA", zh: "AURA 通知与互动", tr: "AURA bildirimleri ve etkileşimleri" },
-  "déplacements administratifs potentiellement évités": { en: "administrative trips potentially avoided", ar: "تنقلات إدارية تم تجنبها المحتمل", zh: "可能减少的行政出行", tr: "potansiyel olarak önlenen idari yolculuklar" },
-  "simulation non certifiée": { en: "non-certified simulation", ar: "محاكاة غير معتمدة", zh: "未经认证的模拟", tr: "sertifikasız simülasyon" },
   "Tendance": { en: "Trend", ar: "الاتجاه", zh: "趋势", tr: "Eğilim" },
   "Progression sur 6 mois": { en: "6-month progress", ar: "التقدم خلال 6 أشهر", zh: "6个月进展", tr: "6 aylık ilerleme" },
   "Leviers": { en: "Drivers", ar: "العوامل", zh: "驱动因素", tr: "Etkileyen faktörler" },
@@ -97,13 +90,9 @@ const common: Record<string, Record<Exclude<Locale, "fr">, string>> = {
   "Coordination interne numérique": { en: "Digital internal coordination", ar: "التنسيق الداخلي الرقمي", zh: "内部数字协同", tr: "Dijital iç koordinasyon" },
   "Échanges administratifs à distance": { en: "Remote administrative interactions", ar: "تفاعلات إدارية عن بُعد", zh: "远程行政互动", tr: "Uzaktan idari etkileşimler" },
   "Valeur établissement": { en: "Facility value", ar: "قيمة للمؤسسة", zh: "机构价值", tr: "Kurum değeri" },
-  "Un indicateur lisible pour la direction, la qualité et la RSE": { en: "A clear indicator for management, quality and ESG teams", ar: "مؤشر واضح للإدارة والجودة والمسؤولية الاجتماعية والبيئية", zh: "为管理、质量与ESG团队提供清晰指标", tr: "Yönetim, kalite ve ESG ekipleri için anlaşılır bir gösterge" },
   "Mesurer": { en: "Measure", ar: "قياس", zh: "衡量", tr: "Ölç" },
   "Réduire": { en: "Reduce", ar: "خفض", zh: "减少", tr: "Azalt" },
   "Valoriser": { en: "Showcase", ar: "إبراز القيمة", zh: "价值展示", tr: "Değer yarat" },
-  "Suivre l’adoption des parcours numériques et les usages réellement réalisés dans AURA.": { en: "Track adoption of digital journeys and actual usage within AURA.", ar: "متابعة اعتماد المسارات الرقمية والاستخدام الفعلي داخل AURA.", zh: "跟踪数字化流程的采用情况以及 AURA 中的实际使用。", tr: "Dijital yolculukların benimsenmesini ve AURA’daki gerçek kullanımı takip edin." },
-  "Identifier les processus encore très dépendants du papier ou des échanges manuels.": { en: "Identify processes that still rely heavily on paper or manual exchanges.", ar: "تحديد العمليات التي ما زالت تعتمد بشكل كبير على الورق أو التبادلات اليدوية.", zh: "识别仍高度依赖纸张或人工沟通的流程。", tr: "Hâlâ kağıda veya manuel iletişime yoğun şekilde bağlı süreçleri belirleyin." },
-  "Produire des indicateurs communicables en interne dans une démarche numérique responsable.": { en: "Produce internal indicators that support a responsible digital strategy.", ar: "إنتاج مؤشرات داخلية تدعم نهجاً رقمياً مسؤولاً.", zh: "生成可用于内部沟通的负责任数字化指标。", tr: "Sorumlu dijital yaklaşımı destekleyen kurum içi göstergeler üretin." },
   "Méthodologie & hypothèses de démonstration": { en: "Methodology & demo assumptions", ar: "المنهجية وافتراضات العرض", zh: "方法与演示假设", tr: "Metodoloji ve demo varsayımları" },
   "Documents dématérialisés": { en: "Paperless documents", ar: "مستندات رقمية", zh: "无纸化文档", tr: "Dijital belgeler" },
   "Pages évitées": { en: "Pages avoided", ar: "صفحات تم تجنبها", zh: "减少纸张页数", tr: "Önlenen sayfalar" },
@@ -117,17 +106,17 @@ const common: Record<string, Record<Exclude<Locale, "fr">, string>> = {
   "Sept": { en: "Sep", ar: "سبت", zh: "9月", tr: "Eyl" }
 };
 
+const receptionRole: Translation = { en: "Reception", ar: "الاستقبال", zh: "接待", tr: "Resepsiyon" };
 const originalText = new WeakMap<Text, string>();
 const originalAttrs = new WeakMap<Element, Record<string, string>>();
 
-function translateValue(value: string, locale: Locale) {
-  if (locale === "fr") return value;
-  const trimmed = value.trim();
-  const translation = common[trimmed]?.[locale];
-  if (!translation) return value;
-  const start = value.slice(0, value.indexOf(trimmed));
-  const end = value.slice(value.indexOf(trimmed) + trimmed.length);
-  return `${start}${translation}${end}`;
+function localize(source: string, locale: Locale, parent?: HTMLElement | null) {
+  if (locale === "fr") return source;
+  const trimmed = source.trim();
+  const contextual = trimmed === "Accueil" && parent?.classList.contains("portal-eyebrow") ? receptionRole[locale] : t[trimmed]?.[locale];
+  if (!contextual) return source;
+  const index = source.indexOf(trimmed);
+  return `${source.slice(0, index)}${contextual}${source.slice(index + trimmed.length)}`;
 }
 
 function translateElement(root: ParentNode, locale: Locale) {
@@ -138,7 +127,7 @@ function translateElement(root: ParentNode, locale: Locale) {
     if (parent && !parent.closest("script,style,[data-no-i18n]")) {
       const source = originalText.get(node) ?? node.nodeValue ?? "";
       if (!originalText.has(node)) originalText.set(node, source);
-      const next = translateValue(source, locale);
+      const next = localize(source, locale, parent);
       if (node.nodeValue !== next) node.nodeValue = next;
     }
     node = walker.nextNode() as Text | null;
@@ -151,7 +140,7 @@ function translateElement(root: ParentNode, locale: Locale) {
       const current = element.getAttribute(attr);
       if (!current) continue;
       if (!(attr in saved)) saved[attr] = current;
-      element.setAttribute(attr, translateValue(saved[attr], locale));
+      element.setAttribute(attr, localize(saved[attr], locale, element as HTMLElement));
     }
     originalAttrs.set(element, saved);
   });
@@ -172,17 +161,17 @@ export function AuraLanguage() {
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
     document.body.dataset.auraLocale = locale;
     translateElement(document.body, locale);
-
     observerRef.current?.disconnect();
     const observer = new MutationObserver((records) => {
       for (const record of records) {
+        if (record.type === "characterData" && record.target.parentElement) translateElement(record.target.parentElement, locale);
         record.addedNodes.forEach((added) => {
           if (added.nodeType === Node.ELEMENT_NODE) translateElement(added as Element, locale);
           if (added.nodeType === Node.TEXT_NODE && added.parentElement) translateElement(added.parentElement, locale);
         });
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     observerRef.current = observer;
     return () => observer.disconnect();
   }, [locale]);
