@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuraLanguage } from "@/components/aura-language";
 import { AuraLanguagePatch } from "@/components/aura-language-patch";
+import { PatientDashboardEnhancer } from "@/components/patient-dashboard-enhancer";
 import { UxJourneyTracker } from "@/components/ux-journey-tracker";
 import "./globals.css";
 import "./aura-polish.css";
@@ -9,6 +10,7 @@ import "./aurademo-actions.css";
 import "./consent.css";
 import "./planning.css";
 import "./patient-experience.css";
+import "./patient-home-dense.css";
 import "./operations.css";
 import "./impact.css";
 import "./language.css";
@@ -28,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientDashboardEnhancer />{children}</body></html>;
 }
