@@ -31,10 +31,10 @@ const exact: Record<string, Translation> = {
   "Demander ou gérer": { en: "Request or manage", ar: "طلب أو إدارة", zh: "申请或管理", tr: "Talep et veya yönet" },
   "Voir mes horaires": { en: "View my schedule", ar: "عرض جدولي", zh: "查看我的时间表", tr: "Programımı gör" },
   "M’inscrire / voir": { en: "Join / view", ar: "التسجيل / العرض", zh: "报名 / 查看", tr: "Katıl / görüntüle" },
-  "Prévenir l’accueil": { en: "Notify reception", ar: "إبلاغ الاستقبال", zh: "通知接待处", tr: "Resepsiyona bildir" },
+  "Prévenir l’accueil": { en: "Notify reception", ar: "إبلاغ الاستقبال", zh: "通知接待处", tr: "Resepsiyona bildir" }
 };
 
-function locale(): Locale {
+function currentLocale(): Locale {
   const value = document.documentElement.lang;
   if (value === "en" || value === "ar" || value === "tr") return value;
   if (value === "zh" || value === "zh-CN") return "zh";
@@ -72,48 +72,39 @@ function translateDynamic(source: string, lang: Exclude<Locale, "fr">) {
   return result;
 }
 
+function applyResidualTranslations() {
+  const lang = currentLocale();
+  if (lang === "fr") return;
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode() as Text | null;
+  while (node) {
+    const parent = node.parentElement;
+    if (parent && !parent.closest("[data-no-i18n]") && !["SCRIPT", "STYLE", "NOSCRIPT"].includes(parent.tagName)) {
+      const current = node.nodeValue || "";
+      const translated = translateDynamic(current, lang);
+      if (translated !== current) node.nodeValue = translated;
+    }
+    node = walker.nextNode() as Text | null;
+  }
+}
+
 export function AuraLanguagePatch() {
   useEffect(() => {
-    const originals = new WeakMap<Text, string>();
-    let timer: number | null = null;
-
-    const apply = () => {
-      const lang = locale();
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode() as Text | null;
-      while (node) {
-        const parent = node.parentElement;
-        if (parent && !parent.closest("[data-no-i18n]") && !["SCRIPT", "STYLE", "NOSCRIPT"].includes(parent.tagName)) {
-          if (!originals.has(node)) originals.set(node, node.nodeValue || "");
-          const base = originals.get(node) || "";
-          if (lang === "fr") {
-            if (node.nodeValue !== base) node.nodeValue = base;
-          } else {
-            const current = node.nodeValue || "";
-            const translatedBase = translateDynamic(base, lang);
-            const translatedCurrent = translateDynamic(current, lang);
-            const next = translatedCurrent !== current ? translatedCurrent : translatedBase;
-            if (next !== current) node.nodeValue = next;
-          }
-        }
-        node = walker.nextNode() as Text | null;
+    const timers: number[] = [];
+    const run = () => {
+      for (const delay of [0, 80, 250, 800, 1800]) {
+        timers.push(window.setTimeout(applyResidualTranslations, delay));
       }
     };
 
-    const schedule = () => {
-      if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(apply, 20);
-    };
-
-    apply();
-    const observer = new MutationObserver(schedule);
+    run();
+    const observer = new MutationObserver(run);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["lang", "dir"] });
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    window.setTimeout(apply, 80);
-    window.setTimeout(apply, 250);
+
     return () => {
       observer.disconnect();
-      if (timer !== null) window.clearTimeout(timer);
+      timers.forEach((timer) => window.clearTimeout(timer));
     };
   }, []);
 
