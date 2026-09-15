@@ -1,0 +1,45 @@
+/* AURA Patient — header ultra compact + messagerie en réception uniquement */
+.portal-patient-epure .portal-header{min-height:40px!important;height:40px!important;padding:3px 14px!important;align-items:center!important}
+.portal-patient-epure .portal-context{gap:5px!important;min-width:0}
+.portal-patient-epure .portal-eyebrow{display:none!important}
+.portal-patient-epure .portal-section-title{font-size:.84rem!important;line-height:1!important}
+.portal-patient-epure .portal-header-actions{height:34px!important;gap:5px!important;align-items:center!important}
+.portal-patient-epure .header-help-link{font-size:.72rem!important;padding:4px 6px!important;white-space:nowrap}
+.portal-patient-epure .message-bell{width:31px!important;height:31px!important;min-width:31px!important}
+.portal-patient-epure .account{height:34px!important;gap:5px!important;align-items:center!important}
+.portal-patient-epure .account .avatar{width:30px!important;height:30px!important;font-size:.7rem!important}
+.portal-patient-epure .account>div:last-child{display:flex!important;align-items:center!important;gap:6px!important;white-space:nowrap}
+.portal-patient-epure .account-stay,.portal-patient-epure .account br{display:none!important}
+.portal-patient-epure .account strong{font-size:.74rem!important;line-height:1!important}
+.portal-patient-epure .account .button-small{min-height:25px!important;height:25px!important;padding:3px 7px!important;border-radius:7px!important;font-size:.62rem!important;line-height:1!important}
+.patient-quick-dock-mount{top:40px!important;padding:5px 14px!important}
+.patient-primary-dock{gap:6px!important}
+.patient-primary-dock>a{min-height:46px!important;padding:6px 10px!important;border-radius:11px!important}
+.patient-primary-icon{width:25px!important;height:25px!important;font-size:1.02rem!important}
+.patient-primary-copy strong{font-size:.84rem!important}
+.patient-primary-copy small{font-size:.63rem!important}
+.portal-patient-epure .content{padding-top:10px!important}
+
+.patient-message-intro{margin-bottom:8px!important}
+.patient-message-intro h1{margin-bottom:3px!important}
+.patient-message-intro p{max-width:720px!important}
+.patient-inbox-summary{display:inline-flex;align-items:center;gap:7px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surface)}
+.patient-inbox-summary>span{font-size:1rem;color:var(--teal-deep)}
+.patient-inbox-summary>strong{font-size:1rem}
+.patient-inbox-summary>small{color:var(--muted)}
+.patient-inbox-only .messenger-thread{min-height:360px}
+.patient-inbox-only .message-list{padding-bottom:12px}
+.patient-inbox-note{border-top:1px solid var(--line);padding:10px 14px;color:var(--muted);font-size:.78rem;line-height:1.4;background:var(--surface-soft)}
+.patient-inbox-only .messenger-thread-head .demo-chip{white-space:nowrap}
+
+@media(max-width:900px){
+  .portal-patient-epure .portal-header{min-height:36px!important;height:36px!important;padding:2px 8px!important}
+  .portal-patient-epure .portal-header-actions{height:32px!important}
+  .portal-patient-epure .portal-section-title{font-size:.78rem!important}
+  .portal-patient-epure .account{height:32px!important}
+  .portal-patient-epure .account .avatar{width:28px!important;height:28px!important}
+  .portal-patient-epure .account>div:last-child{display:none!important}
+  .portal-patient-epure .message-bell{width:29px!important;height:29px!important;min-width:29px!important}
+  .patient-inbox-only{grid-template-columns:1fr!important}
+  .patient-inbox-only .messenger-contacts{max-height:180px;overflow:auto;border-right:0!important;border-bottom:1px solid var(--line)}
+}
