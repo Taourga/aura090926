@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { PermissionStatus } from "@/lib/types";
 
 type Rel<T> = T | T[] | null;
-type Patient = { id: string; full_name: string; phone: string | null };
+type Patient = { id: string; full_name: string; phone: string | null; email: string | null };
 type Stay = { patient_id: string; room_number: string | null; presence: string; planned_discharge_at: string | null; ward: Rel<{ name: string; floor: string | null }> };
 type Doctor = { id: string; full_name: string; specialty: string | null; user_id: string | null };
 type Roster = { id: string; display_name: string; linked_profile_id: string | null; floor_number: number; room_number: string | null; reference_doctor_id: string };
@@ -56,6 +56,29 @@ type UnifiedPatient = {
 
 const one = <T,>(value: Rel<T>) => Array.isArray(value) ? value[0] : value;
 const initials = (name: string) => name.split(" ").filter(Boolean).slice(0,2).map((part)=>part[0]).join("").toUpperCase();
+const demoCoordinatesFor = (key: string, name: string) => {
+  const seed = Array.from(key).reduce((acc, char) => ((acc * 31) + char.charCodeAt(0)) >>> 0, 17);
+  const places = [
+    { city:"Paris", postalCode:"75015", address:"18 avenue des Tilleuls" },
+    { city:"Nanterre", postalCode:"92000", address:"24 rue des Acacias" },
+    { city:"Boulogne-Billancourt", postalCode:"92100", address:"11 allée des Lilas" },
+    { city:"Créteil", postalCode:"94000", address:"32 avenue du Parc" },
+    { city:"Saint-Denis", postalCode:"93200", address:"7 rue des Écoles" },
+    { city:"Versailles", postalCode:"78000", address:"15 rue du Belvédère" },
+  ];
+  const place = places[seed % places.length];
+  const p1 = String(10 + (seed % 80)).padStart(2,"0");
+  const p2 = String(10 + ((seed >>> 8) % 80)).padStart(2,"0");
+  const p3 = String(10 + ((seed >>> 16) % 80)).padStart(2,"0");
+  const emailName = name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,".").replace(/^\.|\.$/g,"");
+  return {
+    phone:`+33 6 00 ${p1} ${p2} ${p3}`,
+    email:`${emailName || "patient"}@aura-demo.test`,
+    address:place.address,
+    postalCode:place.postalCode,
+    city:place.city,
+  };
+};
 
 export const dynamic = "force-dynamic";
 
@@ -77,7 +100,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
   ] = await Promise.all([
     supabase.from("care_team_directory").select("id,full_name,specialty,user_id").eq("member_type","doctor").eq("active",true),
     supabase.from("clinic_patient_roster").select("id,display_name,linked_profile_id,floor_number,room_number,reference_doctor_id").eq("active",true),
-    supabase.from("profiles").select("id,full_name,phone").eq("role","patient").eq("active",true).order("full_name"),
+    supabase.from("profiles").select("id,full_name,phone,email").eq("role","patient").eq("active",true).order("full_name"),
     supabase.from("patient_stays").select("patient_id,room_number,presence,planned_discharge_at,ward:wards(name,floor)").is("ended_at",null),
     supabase.from("patient_contact_cards").select("patient_id,mobile_phone,personal_email,address_line1,postal_code,city"),
     supabase.from("trusted_contacts").select("patient_id,full_name,relationship,phone,email,user_id,portal_enabled,scopes,notification_preferences,consented_at,revoked_at,access_expires_at,is_emergency_contact,preferred_contact_method"),
@@ -151,6 +174,8 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
   const trustedByPatient = new Map(((trustedRows || []) as Trusted[]).map((t)=>[t.patient_id,t]));
   const realContact = selected?.profileId ? contactByPatient.get(selected.profileId) : undefined;
   const realTrusted = selected?.profileId ? trustedByPatient.get(selected.profileId) : undefined;
+  const selectedProfile = selected?.profileId ? patientById.get(selected.profileId) : undefined;
+  const fallbackContact = selected ? demoCoordinatesFor(selected.key, selected.full_name) : null;
 
   const [{ data: permissions }, { data: appointments }, { data: enrollments }] = selected?.profileId ? await Promise.all([
     supabase.from("permission_requests").select("id,departure_at,return_at,reason,status").eq("patient_id",selected.profileId).order("departure_at",{ascending:false}).limit(8),
@@ -173,11 +198,18 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
 
   const activePermission = permissionList.find((p)=>["submitted","waiting","approved","departed"].includes(p.status));
   const activePortal = !!realTrusted?.portal_enabled && !!realTrusted.consented_at && !realTrusted.revoked_at && !!realTrusted.user_id && (!realTrusted.access_expires_at || new Date(realTrusted.access_expires_at) > new Date());
-  const patientPhone = selected?.isDemo ? scenario?.mobile_phone || null : realContact?.mobile_phone || selected?.phone || null;
-  const patientEmail = selected?.isDemo ? scenario?.personal_email || null : realContact?.personal_email || null;
+  const patientPhone = selected?.isDemo
+    ? scenario?.mobile_phone || fallbackContact?.phone || null
+    : realContact?.mobile_phone || selected?.phone || fallbackContact?.phone || null;
+  const patientEmail = selected?.isDemo
+    ? scenario?.personal_email || fallbackContact?.email || null
+    : realContact?.personal_email || selectedProfile?.email || fallbackContact?.email || null;
   const patientAddress = selected?.isDemo
-    ? scenario?.city || "Ville non renseignée"
-    : [realContact?.address_line1,[realContact?.postal_code,realContact?.city].filter(Boolean).join(" ")].filter(Boolean).join(" · ") || "Adresse non renseignée";
+    ? scenario?.city || fallbackContact?.city || "Ville de démonstration"
+    : `${realContact?.address_line1 || fallbackContact?.address || "Adresse de démonstration"} · ${realContact?.postal_code || fallbackContact?.postalCode || "75000"} ${realContact?.city || fallbackContact?.city || "Paris"}`;
+  const hasGeneratedContact = selected?.isDemo
+    ? !scenario?.mobile_phone || !scenario?.personal_email || !scenario?.city
+    : !(realContact?.mobile_phone || selected?.phone) || !(realContact?.personal_email || selectedProfile?.email) || !realContact?.address_line1 || !realContact?.postal_code || !realContact?.city;
   const trustedName = selected?.isDemo ? scenario?.trusted_contact_name : realTrusted?.full_name;
   const trustedRelationship = selected?.isDemo ? scenario?.trusted_contact_relationship : realTrusted?.relationship;
   const trustedPhone = selected?.isDemo ? scenario?.trusted_contact_phone : realTrusted?.phone;
@@ -218,7 +250,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
           </div>
 
           <div className="doctor-simple-grid">
-            <article className="doctor-simple-card"><div className="doctor-simple-card-head"><h3>Coordonnées</h3></div>{patientPhone ? <a className="contact-link" href={`tel:${patientPhone.replace(/\s+/g,"")}`}>{patientPhone}</a> : <strong>Téléphone non renseigné</strong>}{patientEmail ? <a className="contact-link" href={`mailto:${patientEmail}`}>{patientEmail}</a> : <span>Email non renseigné</span>}<span>{patientAddress}</span></article>
+            <article className="doctor-simple-card"><div className="doctor-simple-card-head"><h3>Coordonnées</h3>{hasGeneratedContact && <span className="badge badge-neutral">Complété pour la démo</span>}</div><a className="contact-link" href={`tel:${patientPhone?.replace(/\s+/g,"")}`}>{patientPhone}</a><a className="contact-link" href={`mailto:${patientEmail}`}>{patientEmail}</a><span>{patientAddress}</span></article>
 
             <article className="doctor-simple-card doctor-simple-card--trusted"><div className="doctor-simple-card-head"><h3>Personne de confiance</h3>{realTrusted && <span className={activePortal?"badge badge-success":"badge badge-neutral"}>{activePortal?"Portail actif":"Contact uniquement"}</span>}</div>{trustedName ? <><strong>{trustedName} · {trustedRelationship || "Proche"}</strong>{trustedPhone ? <a className="contact-link" href={`tel:${trustedPhone.replace(/\s+/g,"")}`}>☎ {trustedPhone}</a> : <span>Téléphone non renseigné</span>}{trustedEmail ? <a className="button button-secondary button-small" href={`mailto:${trustedEmail}`}>✉ Envoyer un email</a> : <span>Email non renseigné</span>}{isEmergencyContact && <small>Contact d’urgence</small>}</> : <span>Non renseignée</span>}</article>
 
