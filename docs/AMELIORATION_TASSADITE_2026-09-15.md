@@ -122,10 +122,51 @@ Migrations appliquées sur le projet Supabase `aura090926` :
 - Vérification Supabase : les tables prévues sont présentes dans `supabase_realtime`.
 - Audit sécurité Supabase exécuté. Il remonte des avertissements historiques sur plusieurs fonctions `SECURITY DEFINER` du projet ainsi que la protection contre les mots de passe compromis désactivée. Ces éléments existaient à l’échelle du projet et feront l’objet d’un chantier sécurité distinct ; la fonction permission modifiée conserve ses contrôles explicites de rôle et d’établissement.
 
+## Itération Patient épurée — 15 septembre 2026
+
+Une seconde passe UX a été appliquée à la suite du retour visuel sur `demo.auradh.com`.
+
+### Objectif
+- Réduire la hauteur du bandeau blanc supérieur.
+- Garder les quatre actions Patient toujours accessibles.
+- Supprimer l’effet de menu **Plus** trop générique.
+- Rendre l’expérience mobile plus proche d’une application native.
+- Réduire encore la densité de l’accueil sans retirer les fonctions métier.
+
+### Changements réalisés
+- Nouveau composant `components/patient-chrome-enhancer.tsx`.
+- Détection sécurisée de l’espace Patient via l’API Patient existante.
+- Header Patient rendu compact et sticky.
+- Les informations secondaires du header sont visuellement réduites afin de conserver en priorité la section courante, l’aide, les messages et le compte.
+- Nouvelle barre principale sticky sur desktop : **Planning / Activités / Visites / Permissions**.
+- Sur mobile, cette barre devient un dock fixe en bas avec pictogrammes et libellés courts.
+- Les anciens grands rectangles de l’accueil sont masqués pour éviter le doublon avec le dock permanent.
+- Dans la barre latérale Patient, **Mon planning**, **Mes sorties** et **Plus** sont retirés visuellement puisque ces accès sont désormais disponibles ailleurs de manière plus directe.
+- Le menu **Plus** disparaît du parcours Patient principal.
+- Les services secondaires utiles sont intégrés directement sur l’accueil sous forme de petits raccourcis : **Repas / Mes contacts / Infos pratiques**.
+- La citation du jour est retirée visuellement de l’accueil afin de libérer de l’espace.
+- Le bulletin de situation reste disponible mais dans un format plus compact.
+- Les blocs Aujourd’hui, notifications, demain, prochain repas et médecin référent sont resserrés.
+- Sur mobile, les informations secondaires du header et des cartes sont encore davantage réduites.
+
+### Sauvegarde spécifique avant cette passe
+- Branche de sauvegarde : `backup-patient-epure-20260915`
+- Branche de travail : `patient-epure-20260915`
+- Point de départ de cette passe : commit `f69d2ee2beff367608b49213c3330cb6c3b0516a`
+
+### Validation technique
+- Build Next.js de la branche `patient-epure-20260915` terminé avec succès sur Vercel.
+- Compilation, lint et vérification TypeScript validés.
+- Aperçu Vercel accessible et redirection d’authentification fonctionnelle.
+
 ## Retour arrière
 
-Pour restaurer exactement la démo précédente, utiliser la branche :
+Pour restaurer exactement la démo avant l’ensemble des modifications Tassadite :
 
 `backup-tassadite-avant-modifications-20260915`
 
-Aucune suppression de cette branche ne doit être faite avant validation complète de la version Tassadite.
+Pour restaurer uniquement l’état juste avant la simplification finale Patient :
+
+`backup-patient-epure-20260915`
+
+Aucune suppression de ces branches ne doit être faite avant validation complète de la version Tassadite.
