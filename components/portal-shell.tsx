@@ -12,6 +12,8 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 
 type NavItem = { href: string; label: string; icon: string; feature?: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
 
+type DoctorDockItem = { href: string; label: string; detail: string; icon: string; feature?: string };
+
 const navItems: NavItem[] = [
   { href: "/portal", label: "Accueil", icon: "⌂" },
   { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
@@ -36,7 +38,7 @@ const navItems: NavItem[] = [
 
 const primaryRoutes: Record<string, string[]> = {
   patient: ["/portal", "/portal/appointments", "/portal/permissions", "/portal/messages"],
-  doctor: ["/portal", "/portal/messages", "/portal/appointments", "/portal/permissions"],
+  doctor: ["/portal"],
   manager: ["/portal", "/portal/pulse", "/portal/impact", "/portal/permissions"],
   nurse: ["/portal", "/portal/handoff", "/portal/appointments", "/portal/messages"],
   reception: ["/portal", "/portal/stays", "/portal/permissions", "/portal/visits"],
@@ -46,6 +48,20 @@ const primaryRoutes: Record<string, string[]> = {
   psychologist: ["/portal", "/portal/appointments", "/portal/activities"],
   provider: ["/portal", "/portal/appointments", "/portal/activities"],
 };
+
+const doctorDockItems: DoctorDockItem[] = [
+  { href: "/portal/patients", label: "Patients", detail: "Mes patients", icon: "◎" },
+  { href: "/portal/appointments", label: "Planning", detail: "Mes rendez-vous", icon: "◷" },
+  { href: "/portal/permissions", label: "Permissions", detail: "À valider", icon: "✓", feature: "permissions" },
+  { href: "/portal/messages", label: "Messages", detail: "Équipe de santé", icon: "✉", feature: "messaging" },
+];
+
+const doctorUtilityItems = [
+  { href: "/portal/doctor-availability", label: "Mes absences", icon: "◌" },
+  { href: "/portal/stays", label: "Séjours", icon: "▦" },
+  { href: "/portal/discharges", label: "Sorties", icon: "⇥" },
+  { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁" },
+];
 
 const routeFeatures: Record<string, string> = {
   "/portal/impact": "impact",
@@ -100,7 +116,7 @@ function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: bo
   const available = baseItems.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role));
   const requestedPrimary = primaryRoutes[profile.role] || ["/portal"];
   const primary = available.filter((item) => requestedPrimary.includes(item.href)).slice(0, 4);
-  const secondary = available.filter((item) => !primary.some((mainItem) => mainItem.href === item.href));
+  const secondary = profile.role === "doctor" ? [] : available.filter((item) => !primary.some((mainItem) => mainItem.href === item.href));
   const secondaryActive = secondary.some((item) => isActive(pathname, item.href));
 
   const renderLink = (item: NavItem, extraClass = "") => {
@@ -131,8 +147,9 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const currentSection = labelForRole({ href: pathname, label: rawSection }, profile.role);
   const helpHref = profile.role === "admin" ? "/portal/admin" : profile.role === "trusted_contact" ? "/portal/proche" : featureEnabled(profile, "information") && profile.role !== "doctor" ? "/portal/information" : "/portal";
   const helpLabel = profile.role === "admin" ? "Configurer" : helpHref === "/portal/information" ? "Aide & infos" : "Retour accueil";
+  const doctorDock = profile.role === "doctor" ? doctorDockItems.filter((item) => featureEnabled(profile, item.feature)) : [];
 
-  return <div className="portal portal-simplified">
+  return <div className={`portal portal-simplified${profile.role === "doctor" ? " portal-doctor-epure" : ""}`}>
     <RealtimeRefresh />
     <a className="skip-link" href="#main-content">Aller au contenu</a>
     <aside className="sidebar">
@@ -154,7 +171,11 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
           <div className="account"><div className="avatar" aria-hidden="true">{initials || "A"}</div><div><strong>{profile.full_name}</strong>{stayDetails && <span className="account-stay">{stayDetails}</span>}<br /><LogoutButton /></div></div>
         </div>
       </header>
-      <main id="main-content" className="content" tabIndex={-1}>{disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p>{profile.role === "admin" && <Link href="/portal/admin" className="button button-primary">Ouvrir les réglages</Link>}</div></section> : children}</main>
+      {profile.role === "doctor" && <div className="doctor-quick-dock-mount"><nav className="doctor-primary-dock" aria-label="Actions principales médecin">{doctorDock.map((item) => <Link key={item.href} href={item.href} className={isActive(pathname, item.href) ? "active" : ""}><span className="doctor-primary-icon" aria-hidden="true">{item.icon}</span><span className="doctor-primary-copy"><strong>{item.label}</strong><small>{item.detail}</small></span></Link>)}</nav></div>}
+      <main id="main-content" className="content" tabIndex={-1}>
+        {profile.role === "doctor" && pathname === "/portal" && <nav className="doctor-home-services" aria-label="Outils médecin"><span>À portée de main</span>{doctorUtilityItems.map((item) => <Link href={item.href} key={item.href}><b aria-hidden="true">{item.icon}</b>{item.label}</Link>)}<a href="https://www.doctolib.fr/" target="_blank" rel="noreferrer"><b aria-hidden="true">↗</b>Doctolib</a></nav>}
+        {disabled ? <section className="card"><div className="card-body"><h1>Module non activé</h1><p className="empty">Cette fonction n’est pas utilisée par {profile.facility.name}. L’administrateur peut l’activer dans les réglages de l’établissement.</p>{profile.role === "admin" && <Link href="/portal/admin" className="button button-primary">Ouvrir les réglages</Link>}</div></section> : children}
+      </main>
       <Navigation profile={profile} mobile />
     </div>
   </div>;
