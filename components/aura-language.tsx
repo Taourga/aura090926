@@ -24,6 +24,8 @@ const t: Record<string, Translation> = {
   "Activités": { en: "Activities", ar: "الأنشطة", zh: "活动", tr: "Etkinlikler" },
   "Visites": { en: "Visits", ar: "الزيارات", zh: "探访", tr: "Ziyaretler" },
   "Messages": { en: "Messages", ar: "الرسائل", zh: "消息", tr: "Mesajlar" },
+  "Messagerie": { en: "Messages", ar: "الرسائل", zh: "消息", tr: "Mesajlar" },
+  "Aucun nouveau message": { en: "No new messages", ar: "لا توجد رسائل جديدة", zh: "暂无新消息", tr: "Yeni mesaj yok" },
   "Mes contacts": { en: "My contacts", ar: "جهات اتصالي", zh: "我的联系人", tr: "Kişilerim" },
   "Menus": { en: "Menus", ar: "القوائم", zh: "菜单", tr: "Menüler" },
   "Infos pratiques": { en: "Useful information", ar: "معلومات عملية", zh: "实用信息", tr: "Pratik bilgiler" },
@@ -34,6 +36,12 @@ const t: Record<string, Translation> = {
   "Retour à l’accueil": { en: "Back home", ar: "العودة للرئيسية", zh: "返回首页", tr: "Ana sayfaya dön" },
   "Se déconnecter": { en: "Sign out", ar: "تسجيل الخروج", zh: "退出登录", tr: "Çıkış yap" },
   "Déconnexion": { en: "Sign out", ar: "تسجيل الخروج", zh: "退出登录", tr: "Çıkış yap" },
+  "Accès sécurisé": { en: "Secure access", ar: "وصول آمن", zh: "安全访问", tr: "Güvenli erişim" },
+
+  "ESPACE MÉDICAL": { en: "MEDICAL SPACE", ar: "المساحة الطبية", zh: "医疗空间", tr: "TIBBİ ALAN" },
+  "Espace médical": { en: "Medical space", ar: "المساحة الطبية", zh: "医疗空间", tr: "Tıbbi alan" },
+  "Vos décisions d’abord, le reste ensuite.": { en: "Your decisions first, everything else second.", ar: "قراراتك أولاً، ثم الباقي.", zh: "先做决策，其余随后。", tr: "Önce kararlarınız, sonra geri kalanı." },
+  "Validez, voyez le prochain patient et préparez votre tournée sans chercher.": { en: "Approve, see the next patient and prepare your rounds without searching.", ar: "اعتمد القرارات، واطلع على المريض التالي وجهّز جولتك دون بحث.", zh: "完成审批、查看下一位患者并快速准备查房。", tr: "Onaylayın, sıradaki hastayı görün ve aramadan turunuzu hazırlayın." },
 
   "À FAIRE MAINTENANT": { en: "TO DO NOW", ar: "ما يجب فعله الآن", zh: "现在待办", tr: "ŞİMDİ YAPILACAKLAR" },
   "À faire maintenant": { en: "To do now", ar: "ما يجب فعله الآن", zh: "现在待办", tr: "Şimdi yapılacaklar" },
