@@ -28,5 +28,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguagePatch /><AuraLanguage /><UxJourneyTracker />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker />{children}</body></html>;
 }
