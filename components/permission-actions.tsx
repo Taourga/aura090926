@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { decidePermission, recordMovement } from "@/app/portal/actions";
 import { ActionFeedback } from "@/components/action-feedback";
 
-export function PermissionDecisionActions({ permissionId }: { permissionId: string }) {
+export function PermissionDecisionActions({ permissionId, currentDecision }: { permissionId: string; currentDecision?: string | null }) {
   const [result, setResult] = useState<{ error?: string; success?: string }>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,7 +16,7 @@ export function PermissionDecisionActions({ permissionId }: { permissionId: stri
     setLoading(false);
     if (!response.error) router.refresh();
   }
-  return <div><ActionFeedback message={result.success} error={result.error} /><div className="inline-actions"><button className="button button-primary button-small" disabled={loading} onClick={() => decide("approved")}>Valider</button><button className="button button-danger button-small" disabled={loading} onClick={() => decide("refused")}>Refuser</button></div></div>;
+  return <div className="permission-decision-actions">{currentDecision&&<small className="decision-current">Votre décision : {currentDecision==="approved"?"accord":"refus"} · vous pouvez la modifier</small>}<ActionFeedback message={result.success} error={result.error} /><div className="inline-actions"><button className="button button-primary button-small" disabled={loading} onClick={() => decide("approved")}>{currentDecision==="approved"?"Accord ✓":"Valider"}</button><button className="button button-danger button-small" disabled={loading} onClick={() => decide("refused")}>{currentDecision==="refused"?"Refus ✓":"Refuser"}</button></div></div>;
 }
 
 export function MovementActions({ permissionId, action }: { permissionId: string; action: "depart" | "return" }) {
