@@ -2,6 +2,10 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "ignorePatterns": ["next-env.d.ts", ".next/", "out/", "build/", ".qa-runtime/"],
   "rules": {
-    "react/no-unescaped-entities": "off"
+    "react/no-unescaped-entities": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      "varsIgnorePattern": "^(visits|externalAppointments)$",
+      "argsIgnorePattern": "^(externalAppointments|_)"
+    }]
   }
 }

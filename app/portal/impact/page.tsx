@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { AuraCopy } from "@/components/aura-copy";
-import { requireProfile } from "@/lib/auth";
+import { facilitySettingNumber, requireProfile } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,31 +15,36 @@ const monthly = [
   { month: "Sept", value: 86 },
 ];
 
-const methodology = [
-  ["Documents dématérialisés", "Événements numériques AURA comptabilisés dans la simulation de démonstration."],
-  ["Pages évitées", "Hypothèse démo : 3 pages papier évitées par document dématérialisé."],
-  ["Déplacements évités", "Uniquement lorsqu’un échange numérique peut raisonnablement remplacer un déplacement administratif."],
-  ["CO₂e évité", "Estimation démonstrative issue de facteurs paramétrables. Ce chiffre n’est ni certifié ni un bilan carbone réglementaire."],
-];
-
 export default async function ImpactPage() {
   const profile = await requireProfile();
   if (!["admin", "governance", "manager"].includes(profile.role)) redirect("/portal");
 
   const isExecutive = profile.role === "admin" || profile.role === "governance";
+  const digitalDocuments = Math.max(0, Math.round(facilitySettingNumber(profile, "impact.digital_documents", 1284)));
+  const digitalInteractions = Math.max(0, Math.round(facilitySettingNumber(profile, "impact.digital_interactions", 2460)));
+  const avoidedTrips = Math.max(0, Math.round(facilitySettingNumber(profile, "impact.avoided_trips", 74)));
+  const pagesPerDocument = Math.max(0, facilitySettingNumber(profile, "impact.pages_per_document", 3));
+  const co2KgPerDocument = Math.max(0, facilitySettingNumber(profile, "impact.co2_kg_per_document", 0.145));
+  const maturity = Math.min(100, Math.max(0, Math.round(facilitySettingNumber(profile, "impact.maturity", 82))));
   const demoMetrics = {
-    digitalDocuments: 1284,
-    pagesAvoided: 3852,
-    digitalInteractions: 2460,
-    avoidedTrips: 74,
-    co2Kg: 186,
-    maturity: 82,
+    digitalDocuments,
+    pagesAvoided: Math.round(digitalDocuments * pagesPerDocument),
+    digitalInteractions,
+    avoidedTrips,
+    co2Kg: Math.round(digitalDocuments * co2KgPerDocument),
+    maturity,
   };
+  const methodology = [
+    ["Documents dématérialisés", "Événements numériques AURA comptabilisés dans le périmètre du module."],
+    ["Pages évitées", `Facteur actif : ${pagesPerDocument.toLocaleString("fr-FR")} page(s) papier potentiellement évitée(s) par document dématérialisé.`],
+    ["Déplacements évités", "Comptabilisés uniquement lorsqu’un échange numérique peut raisonnablement remplacer un déplacement administratif."],
+    ["CO₂e évité", `Facteur actif : ${co2KgPerDocument.toLocaleString("fr-FR", { maximumFractionDigits: 3 })} kg CO₂e par document. Estimation paramétrable, non certifiée et distincte d’un bilan carbone réglementaire.`],
+  ];
 
   return <PortalShell profile={profile}>
     <section className="impact-hero impact-hero-simplified">
       <div>
-        <span className="section-kicker">AURA Impact · Démonstration</span>
+        <span className="section-kicker">AURA Impact · Méthodologie paramétrable</span>
         <h1><AuraCopy id="performanceImpactTitle" /></h1>
         <p><AuraCopy id="performanceImpactLead" /></p>
         <div className="impact-hero-actions">
@@ -56,14 +61,14 @@ export default async function ImpactPage() {
       <article><strong><AuraCopy id="impactDirection" /></strong><span><AuraCopy id="impactDirectionText" /></span></article>
     </section>
 
-    <div className="impact-notice"><strong>Données de démonstration</strong><span><AuraCopy id="demoDataNote" /></span></div>
+    <div className="impact-notice"><strong>Données de démonstration</strong><span>Les volumes restent fictifs dans la démo. Les facteurs de calcul sont maintenant lus depuis la configuration de l’établissement afin d’être recalibrés lors d’un pilote.</span></div>
 
     <section className="impact-grid">
       <article className="impact-kpi"><span>DOCUMENTS NUMÉRIQUES</span><strong>{demoMetrics.digitalDocuments.toLocaleString("fr-FR")}</strong><small>interactions documentaires dématérialisées</small></article>
-      <article className="impact-kpi"><span>PAGES ÉVITÉES · EST.</span><strong>{demoMetrics.pagesAvoided.toLocaleString("fr-FR")}</strong><small>selon l’hypothèse de démonstration</small></article>
+      <article className="impact-kpi"><span>PAGES ÉVITÉES · EST.</span><strong>{demoMetrics.pagesAvoided.toLocaleString("fr-FR")}</strong><small>{pagesPerDocument.toLocaleString("fr-FR")} page(s) / document</small></article>
       <article className="impact-kpi"><span>ÉCHANGES NUMÉRIQUES</span><strong>{demoMetrics.digitalInteractions.toLocaleString("fr-FR")}</strong><small>notifications et échanges AURA</small></article>
       <article className="impact-kpi"><span>DÉPLACEMENTS ÉVITÉS · EST.</span><strong>{demoMetrics.avoidedTrips}</strong><small>déplacements administratifs potentiellement évités</small></article>
-      <article className="impact-kpi impact-kpi--primary"><span>CO₂e ÉVITÉ · EST.</span><strong>{demoMetrics.co2Kg} kg</strong><small>simulation non certifiée</small></article>
+      <article className="impact-kpi impact-kpi--primary"><span>CO₂e ÉVITÉ · EST.</span><strong>{demoMetrics.co2Kg} kg</strong><small>facteur paramétrable · non certifié</small></article>
     </section>
 
     <section className="impact-panels">
@@ -91,12 +96,12 @@ export default async function ImpactPage() {
       <div className="impact-commercial-grid">
         <div><strong>Mesurer</strong><span>Suivre l’adoption des parcours numériques et les usages réellement réalisés dans AURA.</span></div>
         <div><strong>Réduire</strong><span>Identifier les processus encore très dépendants du papier ou des échanges manuels.</span></div>
-        <div><strong>Valoriser</strong><span>Produire des indicateurs communicables en interne dans une démarche numérique responsable.</span></div>
+        <div><strong>Calibrer</strong><span>Ajuster les facteurs de calcul au contexte réel de l’établissement avant toute communication externe.</span></div>
       </div>
     </section>
 
     {isExecutive && <details className="impact-methodology">
-      <summary>Méthodologie & hypothèses de démonstration</summary>
+      <summary>Méthodologie & facteurs actifs</summary>
       <div>{methodology.map(([title, body]) => <article key={title}><strong>{title}</strong><p>{body}</p></article>)}</div>
     </details>}
   </PortalShell>;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuraLanguage } from "@/components/aura-language";
+import { UxJourneyTracker } from "@/components/ux-journey-tracker";
 import "./globals.css";
 import "./aura-polish.css";
 import "./aurademo.css";
@@ -26,5 +27,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><UxJourneyTracker />{children}</body></html>;
 }

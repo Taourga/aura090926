@@ -22,7 +22,7 @@ export default function HomePage() {
         <Link href="/" className="brand"><span className="brand-mark">A</span><span>AURA</span></Link>
         <nav className="public-nav" aria-label="Navigation publique">
           <a href="#solution">Solution</a>
-          <a href="#impact">Impact</a>
+          <Link href="/performance-impact">Performance & Impact</Link>
           <Link href="/demo">Démo</Link>
           <Link className="button button-secondary" href="/login">Se connecter</Link>
         </nav>
@@ -80,6 +80,7 @@ export default function HomePage() {
           <h2>Mesurer l’impact positif du parcours numérique</h2>
           <p><AuraCopy id="impactLead" /></p>
           <div className="impact-demo-note"><strong>Données de démonstration</strong><span><AuraCopy id="demoDataNote" /></span></div>
+          <div style={{ marginTop: 18 }}><Link className="button button-secondary" href="/performance-impact">Découvrir Performance & Impact</Link></div>
         </div>
         <div className="public-impact-metrics">
           {impactMetrics.map(([label, value, detail]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>)}
@@ -94,7 +95,7 @@ export default function HomePage() {
       </section>
 
       <section className="sales-cta sales-cta-simplified">
-        <div><span className="eyebrow">AURA FR · AURA DZ</span><h2><AuraCopy id="pilotTitle" /></h2><p><AuraCopy id="pilotLead" /></p></div>
+        <div><span className="eyebrow">AURA FR · AURA DZ</span><h2><AuraCopy id="pilotTitle" /></h2><p><AuraCopy id="pilotLead" /></p><div style={{ marginTop: 14 }}><Link href="/commercial" className="text-link">Voir la présentation commerciale →</Link></div></div>
         <a className="button button-primary button-large" href="mailto:contact@auradh.com?subject=Pilote%20AURA"><AuraCopy id="requestDemo" /></a>
       </section>
 
