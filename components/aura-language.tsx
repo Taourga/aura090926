@@ -18,6 +18,7 @@ const t: Record<string, Translation> = {
   "Réception": { en: "Reception", ar: "الاستقبال", zh: "接待", tr: "Resepsiyon" },
   "Mes patients": { en: "My patients", ar: "مرضاي", zh: "我的患者", tr: "Hastalarım" },
   "Permissions": { en: "Leave requests", ar: "طلبات الخروج", zh: "外出申请", tr: "İzin talepleri" },
+  "Permission": { en: "Leave request", ar: "طلب خروج", zh: "外出申请", tr: "İzin talebi" },
   "Mes permissions": { en: "My leave requests", ar: "طلبات خروجي", zh: "我的外出申请", tr: "İzin taleplerim" },
   "Planning": { en: "Schedule", ar: "الجدول", zh: "日程", tr: "Program" },
   "Mon planning": { en: "My schedule", ar: "جدولي", zh: "我的日程", tr: "Programım" },
@@ -37,11 +38,13 @@ const t: Record<string, Translation> = {
   "Se déconnecter": { en: "Sign out", ar: "تسجيل الخروج", zh: "退出登录", tr: "Çıkış yap" },
   "Déconnexion": { en: "Sign out", ar: "تسجيل الخروج", zh: "退出登录", tr: "Çıkış yap" },
   "Accès sécurisé": { en: "Secure access", ar: "وصول آمن", zh: "安全访问", tr: "Güvenli erişim" },
+  "Ch.": { en: "Rm.", ar: "غرفة", zh: "病房", tr: "Oda" },
 
   "ESPACE MÉDICAL": { en: "MEDICAL SPACE", ar: "المساحة الطبية", zh: "医疗空间", tr: "TIBBİ ALAN" },
   "Espace médical": { en: "Medical space", ar: "المساحة الطبية", zh: "医疗空间", tr: "Tıbbi alan" },
   "Vos décisions d’abord, le reste ensuite.": { en: "Your decisions first, everything else second.", ar: "قراراتك أولاً، ثم الباقي.", zh: "先做决策，其余随后。", tr: "Önce kararlarınız, sonra geri kalanı." },
   "Validez, voyez le prochain patient et préparez votre tournée sans chercher.": { en: "Approve, see the next patient and prepare your rounds without searching.", ar: "اعتمد القرارات، واطلع على المريض التالي وجهّز جولتك دون بحث.", zh: "完成审批、查看下一位患者并快速准备查房。", tr: "Onaylayın, sıradaki hastayı görün ve aramadan turunuzu hazırlayın." },
+  "Uniquement les patients dont vous assurez le suivi référent.": { en: "Only patients for whom you are the primary physician.", ar: "فقط المرضى الذين تتولى متابعتهم كطبيب مرجعي.", zh: "仅显示由您担任主要负责医生的患者。", tr: "Yalnızca sorumlu doktoru olduğunuz hastalar gösterilir." },
 
   "À FAIRE MAINTENANT": { en: "TO DO NOW", ar: "ما يجب فعله الآن", zh: "现在待办", tr: "ŞİMDİ YAPILACAKLAR" },
   "À faire maintenant": { en: "To do now", ar: "ما يجب فعله الآن", zh: "现在待办", tr: "Şimdi yapılacaklar" },
