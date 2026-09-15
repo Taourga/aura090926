@@ -15,59 +15,32 @@ type Contact = { id: string; full_name: string; role: "doctor" | "nurse" | "mana
 function createDemoAdminClient() {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret || process.env.VERCEL_ENV === "production" || (process.env.VERCEL && process.env.VERCEL_GIT_COMMIT_REF !== "aurademo")) return null;
-  return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, secret, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, secret, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 }
 
 async function loadPatientContacts(facilityId: string): Promise<Contact[]> {
   const admin = createDemoAdminClient();
   if (!admin) return [];
-
-  const { data: memberships } = await admin
-    .from("facility_memberships")
-    .select("user_id, role")
-    .eq("facility_id", facilityId)
-    .eq("active", true)
-    .in("role", patientContactRoles);
+  const { data: memberships } = await admin.from("facility_memberships").select("user_id, role").eq("facility_id", facilityId).eq("active", true).in("role", patientContactRoles);
   const rows = memberships || [];
   const ids = rows.map((row) => row.user_id);
   if (!ids.length) return [];
-
   const { data: profiles } = await admin.from("profiles").select("id, full_name, active").in("id", ids).eq("active", true);
   const names = new Map((profiles || []).map((item) => [item.id, item.full_name]));
-  return rows
-    .filter((row) => names.has(row.user_id))
-    .map((row) => ({ id: row.user_id, full_name: names.get(row.user_id)!, role: row.role as Contact["role"] }))
-    .sort((a, b) => a.full_name.localeCompare(b.full_name, "fr"));
+  return rows.filter((row) => names.has(row.user_id)).map((row) => ({ id: row.user_id, full_name: names.get(row.user_id)!, role: row.role as Contact["role"] })).sort((a, b) => a.full_name.localeCompare(b.full_name, "fr"));
 }
 
 async function loadActivePatientContacts(facilityId: string): Promise<Contact[]> {
   const admin = createDemoAdminClient();
   if (!admin) return [];
-
-  const { data: stays } = await admin
-    .from("patient_stays")
-    .select("patient_id")
-    .eq("facility_id", facilityId)
-    .is("ended_at", null);
+  const { data: stays } = await admin.from("patient_stays").select("patient_id").eq("facility_id", facilityId).is("ended_at", null);
   const patientIds = [...new Set((stays || []).map((stay) => stay.patient_id))];
   if (!patientIds.length) return [];
-
-  const { data: memberships } = await admin
-    .from("facility_memberships")
-    .select("user_id")
-    .eq("facility_id", facilityId)
-    .eq("role", "patient")
-    .eq("active", true)
-    .in("user_id", patientIds);
+  const { data: memberships } = await admin.from("facility_memberships").select("user_id").eq("facility_id", facilityId).eq("role", "patient").eq("active", true).in("user_id", patientIds);
   const allowedIds = (memberships || []).map((row) => row.user_id);
   if (!allowedIds.length) return [];
-
   const { data: profiles } = await admin.from("profiles").select("id, full_name, active").in("id", allowedIds).eq("active", true);
-  return (profiles || [])
-    .map((item) => ({ id: item.id, full_name: item.full_name, role: "patient" as const }))
-    .sort((a, b) => a.full_name.localeCompare(b.full_name, "fr"));
+  return (profiles || []).map((item) => ({ id: item.id, full_name: item.full_name, role: "patient" as const })).sort((a, b) => a.full_name.localeCompare(b.full_name, "fr"));
 }
 
 export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ contact?: string }> }) {
@@ -76,12 +49,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   const { contact: requestedContactId } = await searchParams;
   const supabase = await createClient();
 
-  const { data: messages } = await supabase
-    .from("clinical_messages")
-    .select("id, sender_id, recipient_id, body, priority, read_at, created_at")
-    .or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`)
-    .order("created_at", { ascending: true })
-    .limit(300);
+  const { data: messages } = await supabase.from("clinical_messages").select("id, sender_id, recipient_id, body, priority, read_at, created_at").or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`).order("created_at", { ascending: true }).limit(300);
 
   let contacts: Contact[] = [];
   if (profile.role === "patient") {
@@ -89,7 +57,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   } else {
     const { data: staffContacts } = await supabase.rpc("clinical_message_contacts");
     contacts = ((staffContacts || []) as Contact[]).filter((contact) => staffMessagingRoles.includes(contact.role));
-    if (["doctor", "nurse", "manager"].includes(profile.role)) {
+    if (["nurse", "manager"].includes(profile.role)) {
       const patients = await loadActivePatientContacts(profile.facility.id);
       const existing = new Set(contacts.map((contact) => contact.id));
       contacts = [...contacts, ...patients.filter((patient) => !existing.has(patient.id))];
@@ -99,8 +67,12 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   const initialSelectedId = requestedContactId && contacts.some((contact) => contact.id === requestedContactId) ? requestedContactId : null;
   const selectedContact = initialSelectedId ? contacts.find((contact) => contact.id === initialSelectedId) : null;
   const isPatient = profile.role === "patient";
+  const unread = (messages || []).filter(message=>message.recipient_id===profile.id&&!message.read_at).length;
+  const discussionIds = new Set((messages || []).map(message=>message.sender_id===profile.id?message.recipient_id:message.sender_id));
+
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><h1>{isPatient ? "Messagerie patient" : selectedContact?.role === "patient" ? `Conversation · ${selectedContact.full_name}` : "Messagerie d’équipe"}</h1><p>{isPatient ? "Échangez directement avec votre équipe soignante pendant votre séjour." : selectedContact?.role === "patient" ? "Le patient sélectionné est déjà ouvert : vous pouvez écrire directement." : "Échanges privés et tracés entre l’équipe soignante et les patients autorisés."}</p></div></div>
+    <div className="page-intro"><div><div className="section-kicker">{profile.role==="doctor"?"Équipe de santé":"Messagerie"}</div><h1>{isPatient ? "Messagerie patient" : selectedContact ? `Conversation · ${selectedContact.full_name}` : "Mes discussions"}</h1><p>{isPatient ? "Échangez directement avec votre équipe soignante pendant votre séjour." : profile.role==="doctor" ? "Échanges réservés au personnel de santé. Les patients se gèrent depuis leur fiche et leur planning, sans messagerie directe ici." : "Échanges privés et tracés avec les contacts autorisés."}</p></div><a className="button button-secondary" href="/portal">⌂ Accueil</a></div>
+    {!isPatient&&<section className="message-overview"><div><span>✉</span><strong>{unread}</strong><small>Nouveaux messages</small></div><div><span>◌</span><strong>{discussionIds.size}</strong><small>Mes discussions</small></div></section>}
     <ClinicalMessenger currentUserId={profile.id} contacts={contacts} initialMessages={messages || []} isPatient={isPatient} initialSelectedId={initialSelectedId} />
   </PortalShell>;
 }
