@@ -101,6 +101,8 @@ Sur mobile :
 
 ## Validation
 
-- Build Next.js : à valider avant bascule production.
-- TypeScript / lint : à valider avant bascule production.
-- Déploiement Vercel preview : à valider avant bascule production.
+- Build Next.js : **OK**.
+- TypeScript / lint : **OK**.
+- Génération des pages : **OK**.
+- Déploiement Vercel preview de la couche graphique : **READY**.
+- Bascule production à effectuer uniquement depuis cette version validée.
