@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { AuraLanguage } from "@/components/aura-language";
 import { AuraLanguagePatch } from "@/components/aura-language-patch";
-import { PatientDashboardEnhancer } from "@/components/patient-dashboard-enhancer";
 import { UxJourneyTracker } from "@/components/ux-journey-tracker";
 import "./globals.css";
 import "./aura-polish.css";
@@ -23,6 +22,7 @@ import "./ux-review.css";
 import "./ux-simplify-v2.css";
 import "./simplification.css";
 import "./simplification-mobile-patch.css";
+import "./tassadite.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
@@ -30,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientDashboardEnhancer />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker />{children}</body></html>;
 }
