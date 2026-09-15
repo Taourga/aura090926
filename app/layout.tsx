@@ -7,6 +7,7 @@ import "./consent.css";
 import "./planning.css";
 import "./patient-experience.css";
 import "./operations.css";
+import "./impact.css";
 import "./final-demo-polish.css";
 import "./final-demo-patch.css";
 import "./hotfix-ux.css";
