@@ -7,6 +7,7 @@ import { roleLabels } from "@/lib/types";
 import { LogoutButton } from "@/components/logout-button";
 import { FacilitySwitcher } from "@/components/facility-switcher";
 import { MessageBell } from "@/components/message-bell";
+import { AuraCopy } from "@/components/aura-copy";
 
 type NavItem = { href: string; label: string; icon: string; feature?: string; roles?: Profile["role"][]; hiddenFor?: Profile["role"][] };
 
@@ -31,6 +32,19 @@ const navItems: NavItem[] = [
   { href: "/portal/housekeeping", label: "Hôtellerie", icon: "◇", feature: "housekeeping", roles: ["governance", "technical", "admin"] },
   { href: "/portal/admin", label: "Réglages", icon: "⚙", roles: ["admin"] },
 ];
+
+const primaryRoutes: Record<string, string[]> = {
+  patient: ["/portal", "/portal/appointments", "/portal/permissions", "/portal/messages"],
+  doctor: ["/portal", "/portal/patients", "/portal/appointments", "/portal/permissions"],
+  manager: ["/portal", "/portal/pulse", "/portal/impact", "/portal/permissions"],
+  nurse: ["/portal", "/portal/handoff", "/portal/appointments", "/portal/messages"],
+  reception: ["/portal", "/portal/stays", "/portal/permissions", "/portal/visits"],
+  admin: ["/portal", "/portal/pulse", "/portal/impact", "/portal/admin"],
+  governance: ["/portal", "/portal/pulse", "/portal/impact", "/portal/housekeeping"],
+  technical: ["/portal", "/portal/pulse", "/portal/discharges", "/portal/housekeeping"],
+  psychologist: ["/portal", "/portal/appointments", "/portal/activities"],
+  provider: ["/portal", "/portal/appointments", "/portal/activities"],
+};
 
 const routeFeatures: Record<string, string> = {
   "/portal/impact": "impact",
@@ -75,15 +89,31 @@ function labelForRole(item: Pick<NavItem, "href" | "label">, role: Profile["role
   return item.label;
 }
 
+function isActive(pathname: string, href: string) {
+  return href === "/portal" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function Navigation({ profile, mobile = false }: { profile: Profile; mobile?: boolean }) {
   const pathname = usePathname();
-  const items = profile.role === "trusted_contact" ? [{ href: "/portal/proche", label: "Mon proche", icon: "♡" } satisfies NavItem] : navItems;
-  return <nav className={mobile ? "mobile-nav" : "nav"} aria-label="Navigation principale">
-    {items.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role)).map((item) => {
-      const active = item.href === "/portal" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
-      const label = labelForRole(item, profile.role);
-      return <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined} title={label}><span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{label}</span></Link>;
-    })}
+  const baseItems = profile.role === "trusted_contact" ? [{ href: "/portal/proche", label: "Mon proche", icon: "♡" } satisfies NavItem] : navItems;
+  const available = baseItems.filter((item) => featureEnabled(profile, item.feature) && (!item.roles || item.roles.includes(profile.role)) && !item.hiddenFor?.includes(profile.role));
+  const requestedPrimary = primaryRoutes[profile.role] || ["/portal"];
+  const primary = available.filter((item) => requestedPrimary.includes(item.href)).slice(0, 4);
+  const secondary = available.filter((item) => !primary.some((mainItem) => mainItem.href === item.href));
+  const secondaryActive = secondary.some((item) => isActive(pathname, item.href));
+
+  const renderLink = (item: NavItem, extraClass = "") => {
+    const active = isActive(pathname, item.href);
+    const label = labelForRole(item, profile.role);
+    return <Link key={item.href} href={item.href} className={`${active ? "active" : ""} ${extraClass}`.trim()} aria-current={active ? "page" : undefined} title={label}><span className="nav-icon" aria-hidden="true">{item.icon}</span><span className="nav-label">{label}</span></Link>;
+  };
+
+  return <nav className={mobile ? "mobile-nav nav-simplified" : "nav nav-simplified"} aria-label="Navigation principale">
+    {primary.map((item) => renderLink(item))}
+    {secondary.length > 0 && <details className={`nav-more ${secondaryActive ? "active" : ""}`} open={!mobile && secondaryActive ? true : undefined}>
+      <summary aria-label="Autres services"><span className="nav-icon" aria-hidden="true">•••</span><span className="nav-label"><AuraCopy id="more" /></span></summary>
+      <div className="nav-more-menu">{secondary.map((item) => renderLink(item, "nav-secondary-link"))}</div>
+    </details>}
   </nav>;
 }
 
@@ -101,7 +131,7 @@ export function PortalShell({ profile, children }: { profile: Profile; children:
   const helpHref = profile.role === "admin" ? "/portal/admin" : profile.role === "trusted_contact" ? "/portal/proche" : featureEnabled(profile, "information") && profile.role !== "doctor" ? "/portal/information" : "/portal";
   const helpLabel = profile.role === "admin" ? "Configurer" : helpHref === "/portal/information" ? "Aide & infos" : "Retour accueil";
 
-  return <div className="portal">
+  return <div className="portal portal-simplified">
     <a className="skip-link" href="#main-content">Aller au contenu</a>
     <aside className="sidebar">
       <Link href={profile.role === "trusted_contact" ? "/portal/proche" : "/portal"} className="brand" aria-label="Accueil AURA"><span className="brand-mark">A</span><span>AURA</span></Link>

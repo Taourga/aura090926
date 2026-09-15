@@ -1,0 +1,134 @@
+/* AURA — simplification commerciale & navigation, 15/09/2026
+   Couche finale volontairement non destructive. */
+
+/* Public : davantage d'espace, moins de bruit, hiérarchie commerciale plus nette. */
+.landing-simplified { background: linear-gradient(180deg,#fbfdfd 0%,#f5faf9 46%,#eef7f5 100%); }
+.landing-simplified .topbar-v2 { min-height:74px; }
+.landing-simplified .public-nav { gap:18px; align-items:center; }
+.landing-simplified .public-nav > a:not(.button) { color:#526b7a; font-weight:750; font-size:.9rem; }
+.landing-simplified .hero-simplified { padding-top:52px; padding-bottom:54px; gap:52px; }
+.landing-simplified .hero-copy h1 { max-width:720px; font-size:clamp(2.6rem,5.4vw,4.9rem); }
+.landing-simplified .hero-lead { max-width:680px; font-size:1.12rem; line-height:1.65; }
+.product-preview-simplified { box-shadow:0 18px 55px rgba(13,44,68,.10); border-color:#d9e8e5; }
+.preview-card-impact { background:linear-gradient(145deg,#eef9f2,#f8fcfa); border-color:#cce6d6 !important; }
+.preview-card-impact span,.preview-card-impact small { color:#39725d !important; }
+
+.public-value-band { width:min(1180px,calc(100% - 40px)); margin:0 auto 18px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1px; overflow:hidden; border:1px solid #dfe9e7; border-radius:18px; background:#dfe9e7; box-shadow:0 8px 24px rgba(13,44,68,.04); }
+.public-value-band > div { display:grid; gap:7px; padding:21px 20px; background:#fff; }
+.public-value-band strong { color:#16324a; font-size:.98rem; }
+.public-value-band span { color:#657986; font-size:.82rem; line-height:1.48; }
+
+.public-section-simplified { padding-top:72px; padding-bottom:72px; }
+.public-section-simplified .section-heading { max-width:720px; margin-bottom:34px; }
+.public-section-simplified .section-heading h2,.public-impact-section h2 { font-size:clamp(1.85rem,3.5vw,2.8rem); line-height:1.1; letter-spacing:-.035em; }
+.public-section-simplified .section-heading p { max-width:680px; }
+.public-pillars { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.public-pillars article { min-height:220px; display:flex; flex-direction:column; padding:22px; border:1px solid #dfe9e7; border-radius:17px; background:#fff; box-shadow:0 5px 18px rgba(13,44,68,.035); }
+.public-pillars article > span:first-child { width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:#e7f5f1; color:#087976; font-size:.76rem; font-weight:900; }
+.public-pillars h3 { margin-top:28px; font-size:1.08rem; color:#16324a; }
+.public-pillars p { margin:10px 0 0; color:#667b87; font-size:.9rem; line-height:1.55; }
+
+.public-impact-section { width:min(1180px,calc(100% - 40px)); margin:46px auto 18px; display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:34px; padding:38px; border:1px solid #cfe4d7; border-radius:24px; background:linear-gradient(135deg,#eff9f4 0%,#fbfefd 62%); box-shadow:0 18px 50px rgba(25,86,64,.07); }
+.public-impact-copy { display:flex; flex-direction:column; justify-content:center; }
+.public-impact-copy p { margin:14px 0 0; color:#60766f; max-width:600px; }
+.impact-demo-note { margin-top:22px; display:grid; gap:3px; padding:13px 14px; border:1px solid #d8e9df; border-radius:12px; background:rgba(255,255,255,.72); }
+.impact-demo-note strong { font-size:.8rem; color:#24624e; }
+.impact-demo-note span { color:#667b74; font-size:.77rem; line-height:1.45; }
+.public-impact-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+.public-impact-metrics article { min-height:135px; display:flex; flex-direction:column; justify-content:center; padding:18px; border:1px solid #dcebe2; border-radius:15px; background:#fff; }
+.public-impact-metrics span { color:#668074; font-size:.68rem; font-weight:900; letter-spacing:.055em; }
+.public-impact-metrics strong { margin-top:5px; color:#174b3d; font-size:1.85rem; letter-spacing:-.045em; }
+.public-impact-metrics small { color:#75887f; font-size:.76rem; }
+.public-impact-section-demo { margin-top:0; }
+
+.journey-grid-simplified { gap:12px; }
+.journey-grid-simplified article { box-shadow:none; }
+.benefit-grid-simplified .benefit-card { min-height:190px; box-shadow:none; }
+.sales-cta-simplified { margin-top:48px; border-radius:22px; }
+.public-footer-simplified { padding-top:34px; padding-bottom:34px; }
+
+/* Sélecteur de langue : un seul bouton visible, les autres se révèlent au focus/hover. */
+.aura-language { gap:4px !important; padding:4px !important; border-radius:12px !important; box-shadow:0 8px 26px rgba(13,44,68,.10) !important; }
+.aura-language button { min-width:38px !important; min-height:34px !important; padding:5px 8px !important; }
+.aura-language button:not(.active) { display:none; }
+.aura-language:hover button,.aura-language:focus-within button { display:inline-flex; }
+.aura-language button.active::before { content:"🌐"; margin-right:4px; font-size:.9rem; }
+
+/* Portail : quatre priorités au premier niveau, le reste derrière Plus. */
+.portal-simplified { grid-template-columns:230px minmax(0,1fr); }
+.portal-simplified .sidebar { padding:21px 13px; gap:20px; }
+.portal-simplified .nav-simplified { display:grid; gap:5px; }
+.portal-simplified .nav-simplified > a,.portal-simplified .nav-more > summary,.portal-simplified .nav-more-menu a { min-height:44px; display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:10px; color:#c6d8df; font-size:.88rem; font-weight:760; }
+.portal-simplified .nav-simplified > a:hover,.portal-simplified .nav-simplified > a.active,.portal-simplified .nav-more.active > summary,.portal-simplified .nav-more > summary:hover { color:#fff; background:rgba(255,255,255,.12); }
+.portal-simplified .nav-icon { width:22px; flex:0 0 22px; text-align:center; opacity:.88; }
+.portal-simplified .nav-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nav-more { position:relative; }
+.nav-more > summary { list-style:none; cursor:pointer; user-select:none; }
+.nav-more > summary::-webkit-details-marker { display:none; }
+.nav-more-menu { display:grid; gap:4px; margin-top:5px; padding:6px; border-radius:12px; background:rgba(0,0,0,.10); }
+.nav-more-menu a { min-height:39px !important; padding:8px 9px !important; font-size:.82rem !important; }
+.nav-more-menu a.active { color:#fff !important; background:rgba(255,255,255,.12); }
+
+.portal-simplified .content { max-width:1320px; padding-top:26px; }
+.portal-simplified .portal-header { min-height:70px; }
+.portal-simplified .role-dashboard { gap:14px; }
+.portal-simplified .role-hero { min-height:auto; padding:20px 22px; border-radius:15px; box-shadow:none; }
+.portal-simplified .role-hero h1 { font-size:clamp(1.55rem,2.2vw,2.05rem); margin-top:4px; margin-bottom:4px; }
+.portal-simplified .role-hero p { margin-bottom:4px; }
+.portal-simplified .role-hero span { line-height:1.45; }
+.portal-simplified .staff-metric-grid { gap:10px; }
+.portal-simplified .staff-metric { min-height:105px; padding:13px 14px; border-radius:13px; box-shadow:none; }
+.portal-simplified .staff-metric strong { font-size:1.55rem; }
+.portal-simplified .role-work-grid { gap:14px; }
+.portal-simplified .work-card { border-radius:14px; box-shadow:none; }
+.portal-simplified .work-card-head { padding:15px 16px; }
+.portal-simplified .work-card-body { padding:15px 16px; }
+.portal-simplified .card { box-shadow:none; }
+
+/* AURA Impact : d'abord la valeur, puis les métriques. */
+.impact-hero-simplified { align-items:center; }
+.impact-hero-simplified h1 { font-size:clamp(2rem,4vw,3.4rem); max-width:780px; }
+.impact-hero-actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:18px; }
+.impact-value-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; margin:0 0 14px; }
+.impact-value-row article { display:grid; gap:5px; padding:16px 17px; border:1px solid #dce9e2; border-radius:13px; background:#fff; }
+.impact-value-row strong { color:#205e4c; }
+.impact-value-row span { color:#6b7d75; font-size:.82rem; line-height:1.45; }
+
+/* Responsive : la simplicité doit rester vraie sur mobile. */
+@media (max-width:980px) {
+  .public-value-band,.public-pillars { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .public-impact-section { grid-template-columns:1fr; }
+  .portal-simplified { grid-template-columns:1fr; }
+  .portal-simplified .content { padding-left:20px; padding-right:20px; }
+}
+
+@media (max-width:760px) {
+  .landing-simplified .topbar-v2 { min-height:66px; }
+  .landing-simplified .public-nav > a:not(.button):not([href="/demo"]) { display:none; }
+  .landing-simplified .hero-simplified { padding-top:34px; gap:30px; }
+  .public-value-band,.public-pillars,.public-impact-metrics,.impact-value-row { grid-template-columns:1fr; }
+  .public-value-band { margin-bottom:8px; }
+  .public-value-band > div { padding:16px; }
+  .public-pillars article { min-height:0; }
+  .public-impact-section { padding:22px; border-radius:18px; margin-top:24px; }
+  .public-impact-metrics article { min-height:108px; }
+  .sales-cta-simplified { margin-top:30px; }
+
+  .mobile-nav.nav-simplified { overflow:visible !important; grid-template-columns:repeat(5,minmax(0,1fr)) !important; }
+  .mobile-nav.nav-simplified > a,.mobile-nav.nav-simplified > .nav-more { min-width:0; }
+  .mobile-nav.nav-simplified .nav-more > summary { min-height:58px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; padding:6px 2px; color:var(--muted); background:transparent; font-size:.67rem; }
+  .mobile-nav.nav-simplified .nav-more.active > summary { color:var(--teal-deep); background:transparent; }
+  .mobile-nav.nav-simplified .nav-more-menu { position:fixed; z-index:80; left:12px; right:12px; bottom:72px; max-height:min(60vh,430px); overflow:auto; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; padding:12px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:0 18px 50px rgba(13,44,68,.18); }
+  .mobile-nav.nav-simplified .nav-more-menu a { min-height:50px !important; color:var(--ink) !important; background:#f6f9f9; }
+  .mobile-nav.nav-simplified .nav-more-menu a.active { color:var(--teal-deep) !important; background:var(--mint) !important; }
+  .mobile-nav.nav-simplified .nav-more-menu .nav-icon { display:inline-block; }
+  .mobile-nav.nav-simplified .nav-more-menu .nav-label { display:inline-block; }
+
+  .aura-language { right:10px !important; top:8px !important; }
+}
+
+@media (max-width:480px) {
+  .public-impact-section { width:min(100% - 24px,1180px); }
+  .public-section-simplified { padding-top:50px; padding-bottom:50px; }
+  .mobile-nav.nav-simplified .nav-more-menu { grid-template-columns:1fr; }
+}

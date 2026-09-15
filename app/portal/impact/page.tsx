@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
+import { AuraCopy } from "@/components/aura-copy";
 import { requireProfile } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -35,16 +37,26 @@ export default async function ImpactPage() {
   };
 
   return <PortalShell profile={profile}>
-    <section className="impact-hero">
+    <section className="impact-hero impact-hero-simplified">
       <div>
         <span className="section-kicker">AURA Impact · Démonstration</span>
-        <h1>Mesurer l’impact positif du parcours numérique</h1>
-        <p>AURA Impact transforme les usages numériques de l’établissement en indicateurs simples de dématérialisation et d’impact environnemental.</p>
+        <h1><AuraCopy id="performanceImpactTitle" /></h1>
+        <p><AuraCopy id="performanceImpactLead" /></p>
+        <div className="impact-hero-actions">
+          <Link href="/portal/pulse" className="button button-secondary">Voir l’activité</Link>
+          {profile.role === "admin" && <Link href="/portal/roi" className="button button-primary">Pilotage ROI</Link>}
+        </div>
       </div>
       <div className="impact-badge"><strong>{demoMetrics.maturity}/100</strong><span>Indice de maturité numérique responsable</span></div>
     </section>
 
-    <div className="impact-notice"><strong>Données de démonstration</strong><span>Les valeurs ci-dessous sont fictives et servent uniquement à illustrer le potentiel du module. Les estimations CO₂e ne constituent pas un bilan carbone certifié.</span></div>
+    <section className="impact-value-row" aria-label="Valeur AURA Impact">
+      <article><strong><AuraCopy id="impactOps" /></strong><span><AuraCopy id="impactOpsText" /></span></article>
+      <article><strong><AuraCopy id="impactRse" /></strong><span><AuraCopy id="impactRseText" /></span></article>
+      <article><strong><AuraCopy id="impactDirection" /></strong><span><AuraCopy id="impactDirectionText" /></span></article>
+    </section>
+
+    <div className="impact-notice"><strong>Données de démonstration</strong><span><AuraCopy id="demoDataNote" /></span></div>
 
     <section className="impact-grid">
       <article className="impact-kpi"><span>DOCUMENTS NUMÉRIQUES</span><strong>{demoMetrics.digitalDocuments.toLocaleString("fr-FR")}</strong><small>interactions documentaires dématérialisées</small></article>
