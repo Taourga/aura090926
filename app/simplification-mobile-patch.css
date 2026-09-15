@@ -1,0 +1,20 @@
+/* Mobile guard for the simplified five-slot navigation. */
+@media (max-width:900px) {
+  .mobile-nav.nav-simplified > .nav-more {
+    flex:0 0 72px !important;
+    min-width:72px !important;
+    scroll-snap-align:start;
+  }
+  .mobile-nav.nav-simplified > a {
+    flex-direction:column !important;
+    justify-content:center !important;
+    align-items:center !important;
+    gap:3px !important;
+  }
+}
+@media (max-width:430px) {
+  .mobile-nav.nav-simplified > .nav-more {
+    flex-basis:68px !important;
+    min-width:68px !important;
+  }
+}
