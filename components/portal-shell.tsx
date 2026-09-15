@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { href: "/portal/pulse", label: "AURA Pulse", icon: "⌁", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/handoff", label: "Relève", icon: "↻", roles: ["nurse"] },
   { href: "/portal/roi", label: "Pilotage ROI", icon: "↗", roles: ["admin"] },
+  { href: "/portal/impact", label: "AURA Impact", icon: "♻", feature: "impact", roles: ["admin", "governance", "manager"] },
   { href: "/portal/stays", label: "Séjours", icon: "▦", roles: ["reception", "nurse", "doctor", "admin"] },
   { href: "/portal/discharges", label: "Sorties", icon: "⇥", roles: ["doctor", "manager", "nurse", "reception", "admin", "governance", "technical"] },
   { href: "/portal/patients", label: "Mes patients", icon: "◎", roles: ["doctor"] },
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
 ];
 
 const routeFeatures: Record<string, string> = {
+  "/portal/impact": "impact",
   "/portal/housekeeping": "housekeeping",
   "/portal/permissions": "permissions",
   "/portal/activities": "activities",
@@ -49,6 +51,7 @@ const routeLabels: Array<[string, string]> = [
   ["/portal/messages", "Messages"],
   ["/portal/contacts", "Mes contacts"],
   ["/portal/information", "Infos pratiques"],
+  ["/portal/impact", "AURA Impact"],
   ["/portal/housekeeping", "Hôtellerie"],
   ["/portal/discharges", "Sorties"],
   ["/portal/patients", "Mes patients"],
