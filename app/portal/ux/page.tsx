@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { requireProfile } from "@/lib/auth";
@@ -41,7 +42,8 @@ export default async function UxDashboardPage() {
   const topDestinations = [...destinations.entries()].sort((a,b) => b[1] - a[1]).slice(0, 10);
 
   return <PortalShell profile={profile}>
-    <div className="page-intro"><div><span className="section-kicker">Tests navigation · 30 derniers jours</span><h1>Mesure UX</h1><p>Mesure uniquement pendant les sessions de test explicitement activées. Aucun nom de patient, message ou contenu de formulaire n’est enregistré.</p></div></div>
+    <div className="page-intro"><div><span className="section-kicker">Tests navigation · 30 derniers jours</span><h1>Mesure UX</h1><p>Mesure uniquement pendant les sessions de test explicitement activées. Aucun nom de patient, message ou contenu de formulaire n’est enregistré.</p></div><div className="page-intro-actions"><Link href="/portal?ux_test=1" className="button button-primary">Démarrer un test</Link><Link href="/portal?ux_test=0" className="button button-secondary">Arrêter le test</Link></div></div>
+    <section className="notice" style={{ marginBottom: 18 }}><strong>Protocole recommandé :</strong> 3 à 5 personnes minimum par profil. Le badge « Mode test UX actif » confirme qu’une session est mesurée.</section>
     {error ? <section className="card"><div className="card-body"><p role="alert">Les mesures UX ne sont pas disponibles pour le moment.</p></div></section> : <>
       <section className="metric-grid">
         <article className="metric"><span>Sessions testées</span><strong>{sessions.size}</strong><div className="metric-detail">tous profils confondus</div></article>
