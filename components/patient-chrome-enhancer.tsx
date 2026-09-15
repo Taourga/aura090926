@@ -13,7 +13,7 @@ type Mounts = {
 const quickItems = [
   { href: "/portal/appointments", icon: "◷", label: "Planning", detail: "Mon calendrier" },
   { href: "/portal/activities", icon: "✦", label: "Activités", detail: "Mes activités" },
-  { href: "/portal/visits", icon: "♧", label: "Visites", detail: "Mes visiteurs" },
+  { href: "/portal/visits", icon: "♧", label: "Visites", detail: "Ajouter une visite" },
   { href: "/portal/permissions", icon: "↗", label: "Permissions", detail: "Mes sorties" },
 ];
 
