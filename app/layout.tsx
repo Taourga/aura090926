@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AuraLanguage } from "@/components/aura-language";
 import { AuraLanguagePatch } from "@/components/aura-language-patch";
 import { UxJourneyTracker } from "@/components/ux-journey-tracker";
+import { PatientChromeEnhancer } from "@/components/patient-chrome-enhancer";
 import "./globals.css";
 import "./aura-polish.css";
 import "./aurademo.css";
@@ -30,5 +31,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientChromeEnhancer />{children}</body></html>;
 }
