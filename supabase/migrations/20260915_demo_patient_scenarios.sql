@@ -29,7 +29,12 @@ create table if not exists public.demo_patient_scenarios (
 );
 
 alter table public.demo_patient_scenarios enable row level security;
-grant select on public.demo_patient_scenarios to authenticated;
+
+-- La table est volontairement en lecture seule côté API :
+-- les scénarios sont préparés par l'administration de la démo, jamais modifiés par le navigateur.
+revoke all on table public.demo_patient_scenarios from anon;
+revoke all on table public.demo_patient_scenarios from authenticated;
+grant select on table public.demo_patient_scenarios to authenticated;
 
 drop policy if exists "demo_patient_scenarios_read" on public.demo_patient_scenarios;
 create policy "demo_patient_scenarios_read" on public.demo_patient_scenarios
