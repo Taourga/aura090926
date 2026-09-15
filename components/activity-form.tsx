@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createActivity } from "@/app/portal/actions";
+import { createActivityEnhanced } from "@/app/portal/tassadite-actions";
 import { ActionFeedback } from "@/components/action-feedback";
 
 export function ActivityForm() {
@@ -12,14 +12,15 @@ export function ActivityForm() {
     event.preventDefault();
     setLoading(true);
     const form = new FormData(event.currentTarget);
-    const reply = await createActivity({
+    const reply = await createActivityEnhanced({
       title: String(form.get("title")), description: String(form.get("description")), startsAt: String(form.get("startsAt")),
       endsAt: String(form.get("endsAt")), location: String(form.get("location")), capacity: Number(form.get("capacity")),
+      requiresPrescription: form.get("requiresPrescription") === "on",
     });
     setResult(reply);
     setLoading(false);
     if (reply.success) event.currentTarget.reset();
   }
 
-  return <form onSubmit={onSubmit}><ActionFeedback message={result.success} error={result.error} /><div className="form-grid"><label className="field wide">Nom de l’activité<input name="title" required placeholder="Ex. relaxation guidée" /></label><label className="field">Début<input name="startsAt" type="datetime-local" required /></label><label className="field">Fin<input name="endsAt" type="datetime-local" required /></label><label className="field">Lieu<input name="location" placeholder="Ex. salle bien-être" /></label><label className="field">Places<input name="capacity" type="number" min="1" defaultValue="12" required /></label><label className="field wide">Description (facultative)<textarea name="description" placeholder="Information utile aux patients." /></label></div><button className="button button-primary" disabled={loading}>{loading ? "Publication..." : "Publier l’activité"}</button></form>;
+  return <form onSubmit={onSubmit}><ActionFeedback message={result.success} error={result.error} /><div className="form-grid"><label className="field wide">Nom de l’activité<input name="title" required placeholder="Ex. relaxation guidée" /></label><label className="field">Début<input name="startsAt" type="datetime-local" required /></label><label className="field">Fin<input name="endsAt" type="datetime-local" required /></label><label className="field">Lieu<input name="location" placeholder="Ex. salle bien-être" /></label><label className="field">Places<input name="capacity" type="number" min="1" defaultValue="12" required /></label><label className="field wide prescription-toggle"><input name="requiresPrescription" type="checkbox" /><span><strong>Avec prescription</strong><small>Cochez si cette activité nécessite une prescription médicale.</small></span></label><label className="field wide">Description (facultative)<textarea name="description" placeholder="Information utile aux patients." /></label></div><button className="button button-primary" disabled={loading}>{loading ? "Publication..." : "Publier l’activité"}</button></form>;
 }
