@@ -24,6 +24,7 @@ import "./ux-simplify-v2.css";
 import "./simplification.css";
 import "./simplification-mobile-patch.css";
 import "./tassadite.css";
+import "./patient-inbox-header.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
