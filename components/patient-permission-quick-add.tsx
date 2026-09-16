@@ -25,22 +25,22 @@ function presetWindow(preset: Preset, minNoticeHours: number) {
     const departure = nextAllowedAt(13, minNoticeHours);
     const returned = new Date(departure);
     returned.setHours(18, 0, 0, 0);
-    return { departure, returned, label: "Demi-journée" };
+    return { departure, returned };
   }
   if (preset === "overnight") {
     const departure = nextAllowedAt(14, minNoticeHours);
     const returned = new Date(departure);
     returned.setDate(returned.getDate() + 1);
     returned.setHours(10, 0, 0, 0);
-    return { departure, returned, label: "Avec une nuit" };
+    return { departure, returned };
   }
   const departure = nextAllowedAt(10, minNoticeHours);
   const returned = new Date(departure);
   returned.setHours(18, 0, 0, 0);
-  return { departure, returned, label: "Journée" };
+  return { departure, returned };
 }
 
-export function PatientPermissionQuickAdd({ minNoticeHours }: { minNoticeHours: number }) {
+export function PatientPermissionQuickAdd({ minNoticeHours = 48 }: { minNoticeHours?: number }) {
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState<Preset>("day");
   const initial = presetWindow("day", minNoticeHours);
