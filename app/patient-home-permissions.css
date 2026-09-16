@@ -1,56 +1,273 @@
-.patient-permission-quick-add {
-  margin: 10px 0 14px;
-  border-radius: 16px;
-  box-shadow: none;
+.patient-permission-premium {
+  position: relative;
+  margin: 10px 0 16px;
+  overflow: hidden;
+  border: 1px solid #d8eeee;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 211, 139, .2), transparent 16%),
+    linear-gradient(135deg, #ffffff 0%, #fbffff 58%, #f3fbfa 100%);
+  box-shadow: 0 14px 36px rgba(15, 76, 92, .08);
 }
 
-.patient-permission-quick-head {
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px 8px;
-}
-
-.patient-permission-quick-head h2 {
-  margin: 2px 0 2px;
-  font-size: 1.05rem;
-}
-
-.patient-permission-quick-head .card-subtitle {
-  margin: 0;
-  font-size: .88rem;
-}
-
-.patient-permission-quick-add .card-body {
-  padding: 8px 16px 14px;
-}
-
-.patient-permission-presets {
+.patient-permission-topline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 26px 14px;
 }
 
-.patient-permission-presets .button {
-  min-height: 38px;
-  flex: 0 0 auto;
+.patient-permission-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
 }
 
-.patient-permission-inline-form {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border, #dbe7e7);
+.patient-permission-symbol {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #dff8f5, #eefcf9);
+  color: #0f8b87;
+  font-size: 1.7rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(15, 139, 135, .08);
 }
 
-.patient-permission-inline-form .form-grid {
-  margin-top: 8px;
+.patient-permission-title-wrap h2 {
+  margin: 2px 0 4px;
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  line-height: 1.05;
+  color: #0b2f3d;
+}
+
+.patient-permission-title-wrap p {
+  margin: 0;
+  color: #627987;
+  font-size: .96rem;
+}
+
+.patient-permission-visual {
+  position: relative;
+  min-width: 340px;
+  height: 76px;
+  flex: 0 0 340px;
+}
+
+.patient-permission-visual small {
+  position: absolute;
+  right: 2px;
+  top: 7px;
+  color: #15908d;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  transform: rotate(-2deg);
+}
+
+.patient-permission-sun {
+  position: absolute;
+  left: 92px;
+  top: 9px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffd69b;
+  box-shadow: 0 0 0 8px rgba(255, 214, 155, .12);
+}
+
+.patient-permission-hill {
+  position: absolute;
+  bottom: 0;
+  border-radius: 55% 55% 0 0;
+  background: #dff4ef;
+}
+
+.patient-permission-hill--one {
+  left: 12px;
+  width: 150px;
+  height: 40px;
+  transform: rotate(-2deg);
+}
+
+.patient-permission-hill--two {
+  left: 112px;
+  width: 118px;
+  height: 30px;
+  background: #cdeee8;
+}
+
+.patient-permission-mainrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 22px;
+  align-items: stretch;
+  padding: 0 26px 22px;
+}
+
+.patient-permission-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.patient-permission-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 82px;
+  padding: 15px 16px;
+  border: 1px solid #d9e8e9;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, .9);
+  color: #0d3340;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(15, 61, 75, .04);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.patient-permission-option:hover {
+  transform: translateY(-2px);
+  border-color: #9fd8d5;
+  box-shadow: 0 12px 24px rgba(15, 94, 102, .08);
+}
+
+.patient-permission-option.is-selected {
+  border-color: #31aaa6;
+  background: linear-gradient(135deg, #effcf9, #f8fffd);
+  box-shadow: 0 10px 26px rgba(19, 139, 134, .11);
+}
+
+.patient-permission-check {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: #eef7f7;
+  color: #0e6870;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.patient-permission-option.is-selected .patient-permission-check {
+  background: #138e8a;
+  color: #fff;
+}
+
+.patient-permission-option-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.patient-permission-option-copy strong {
+  font-size: .98rem;
+  line-height: 1.15;
+}
+
+.patient-permission-option-copy small {
+  color: #718490;
+  font-size: .82rem;
+}
+
+.patient-permission-actions {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  padding-left: 22px;
+  border-left: 1px solid #d9e9ea;
+}
+
+.patient-permission-cta,
+.patient-permission-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  border-radius: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.patient-permission-cta {
+  border: 0;
+  background: linear-gradient(135deg, #0e8d89, #0a7777);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(8, 120, 116, .2);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.patient-permission-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(8, 120, 116, .24);
+}
+
+.patient-permission-secondary {
+  border: 1px solid #d7e5e6;
+  background: #fff;
+  color: #0b3440;
+}
+
+.patient-permission-inline-form--premium {
+  margin: 0 26px 22px;
+  padding: 18px;
+  border: 1px solid #dbe9ea;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.patient-permission-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.patient-permission-form-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.patient-permission-form-head strong {
+  font-size: 1.05rem;
+  color: #0d3340;
+}
+
+.patient-permission-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d6e6e7;
+  border-radius: 50%;
+  background: #fff;
+  color: #34545e;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.patient-permission-form-grid {
+  margin-top: 6px;
 }
 
 .patient-permission-inline-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .patient-permission-inline-actions small {
@@ -58,38 +275,103 @@
   margin-left: auto;
 }
 
-@media (max-width: 760px) {
-  .patient-permission-quick-add {
-    margin: 8px 0 10px;
-  }
-
-  .patient-permission-quick-head {
-    align-items: flex-start;
-    padding: 12px 12px 6px;
-  }
-
-  .patient-permission-quick-head .button {
+@media (max-width: 1100px) {
+  .patient-permission-visual {
     display: none;
   }
 
-  .patient-permission-quick-add .card-body {
-    padding: 8px 12px 12px;
+  .patient-permission-mainrow {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+}
+
+@media (max-width: 760px) {
+  .patient-permission-premium {
+    margin: 8px 0 12px;
+    border-radius: 18px;
   }
 
-  .patient-permission-presets {
-    display: grid;
+  .patient-permission-topline {
+    padding: 16px 14px 10px;
+  }
+
+  .patient-permission-title-wrap {
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .patient-permission-symbol {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 14px;
+    font-size: 1.3rem;
+  }
+
+  .patient-permission-title-wrap h2 {
+    font-size: 1.25rem;
+  }
+
+  .patient-permission-title-wrap p {
+    font-size: .84rem;
+  }
+
+  .patient-permission-mainrow {
+    display: block;
+    padding: 0 14px 14px;
+  }
+
+  .patient-permission-options {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 7px;
   }
 
-  .patient-permission-presets .button {
-    min-width: 0;
-    width: 100%;
-    padding-inline: 8px;
-    font-size: .8rem;
+  .patient-permission-option {
+    min-height: 72px;
+    padding: 10px 8px;
+    gap: 7px;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    border-radius: 14px;
   }
 
-  .patient-permission-inline-form .form-grid {
+  .patient-permission-check {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    font-size: 1rem;
+  }
+
+  .patient-permission-option-copy strong {
+    font-size: .78rem;
+  }
+
+  .patient-permission-option-copy small {
+    display: none;
+  }
+
+  .patient-permission-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 10px;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .patient-permission-cta,
+  .patient-permission-secondary {
+    min-height: 44px;
+    font-size: .9rem;
+  }
+
+  .patient-permission-inline-form--premium {
+    margin: 0 14px 14px;
+    padding: 14px;
+  }
+
+  .patient-permission-form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -98,11 +380,12 @@
   }
 
   .patient-permission-inline-actions .button {
-    flex: 1 1 auto;
+    width: 100%;
   }
 
   .patient-permission-inline-actions small {
     width: 100%;
     margin-left: 0;
+    font-size: .78rem;
   }
 }
