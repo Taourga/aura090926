@@ -3,6 +3,8 @@ import { AuraLanguage } from "@/components/aura-language";
 import { AuraLanguagePatch } from "@/components/aura-language-patch";
 import { UxJourneyTracker } from "@/components/ux-journey-tracker";
 import { PatientChromeEnhancer } from "@/components/patient-chrome-enhancer";
+import { PrescriptionWorkflow } from "@/components/prescription-workflow";
+import { InterventionNavEnhancer } from "@/components/intervention-nav-enhancer";
 import "./globals.css";
 import "./aura-polish.css";
 import "./aurademo.css";
@@ -27,6 +29,7 @@ import "./tassadite.css";
 import "./patient-inbox-header.css";
 import "./doctor-epure.css";
 import "./care-ui-alerts.css";
+import "./prescriptions.css";
 
 export const metadata: Metadata = {
   title: "AURA Demo | Orchestration du séjour patient",
@@ -34,5 +37,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientChromeEnhancer />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientChromeEnhancer /><PrescriptionWorkflow /><InterventionNavEnhancer />{children}</body></html>;
 }
