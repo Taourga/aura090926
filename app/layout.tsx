@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuraLanguage } from "@/components/aura-language";
 import { AuraLanguagePatch } from "@/components/aura-language-patch";
 import { UxJourneyTracker } from "@/components/ux-journey-tracker";
@@ -37,5 +38,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientChromeEnhancer /><PrescriptionWorkflow /><InterventionNavEnhancer />{children}</body></html>;
+  return <html lang="fr"><body><AuraLanguage /><AuraLanguagePatch /><UxJourneyTracker /><PatientChromeEnhancer /><Suspense fallback={null}><PrescriptionWorkflow /></Suspense><InterventionNavEnhancer />{children}</body></html>;
 }
