@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { PatientPermissionQuickAdd } from "@/components/patient-permission-quick-add";
 
 type Mounts = {
   dock: HTMLElement | null;
@@ -88,10 +89,13 @@ export function PatientChromeEnhancer() {
   ) : null;
 
   const services = mounts.services ? createPortal(
-    <nav className="patient-home-services" aria-label="Services utiles">
-      <span className="patient-home-services-title">À portée de main</span>
-      {serviceItems.map((item) => <Link key={item.href} href={item.href}><b aria-hidden="true">{item.icon}</b><span>{item.label}</span></Link>)}
-    </nav>,
+    <>
+      <nav className="patient-home-services" aria-label="Services utiles">
+        <span className="patient-home-services-title">À portée de main</span>
+        {serviceItems.map((item) => <Link key={item.href} href={item.href}><b aria-hidden="true">{item.icon}</b><span>{item.label}</span></Link>)}
+      </nav>
+      <PatientPermissionQuickAdd minNoticeHours={48} />
+    </>,
     mounts.services,
   ) : null;
 
