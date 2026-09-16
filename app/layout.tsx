@@ -11,6 +11,7 @@ import "./consent.css";
 import "./planning.css";
 import "./patient-experience.css";
 import "./patient-home-dense.css";
+import "./patient-home-permissions.css";
 import "./operations.css";
 import "./impact.css";
 import "./language.css";
