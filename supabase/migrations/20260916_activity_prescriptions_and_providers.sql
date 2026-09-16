@@ -114,33 +114,72 @@ grant select on public.activity_services to authenticated;
 grant select, insert, update on public.activity_prescriptions to authenticated;
 grant select, insert, update on public.activity_prescription_sessions to authenticated;
 
--- Catalogue de démonstration. Les intervenants sont créés dans le répertoire de soins
--- et pourront être liés à un compte utilisateur via care_team_directory.user_id.
+-- Les cinq comptes techniques ci-dessous restent de vrais comptes Auth, mais leur rôle
+-- dans AURA Demo Clinic devient "provider". Deux comptes techniques restent disponibles.
 with facility as (
   select id from public.facilities where active = true order by created_at limit 1
-), providers(code,title,description,location,full_name,specialty,member_type) as (
+), mapped(email,specialty) as (
   values
-    ('pool','Piscine','Séances aquatiques encadrées sur prescription.','Piscine thérapeutique','Nicolas Moreau','Intervenant piscine','provider'),
-    ('boxing','Boxe-thérapie','Travail corporel, confiance et régulation émotionnelle.','Salle de sport','Sarah Fontaine','Boxe-thérapie','provider'),
-    ('equine','Équithérapie','Médiation thérapeutique avec le cheval.','Centre équestre partenaire','Élodie Martin','Équithérapie','provider'),
-    ('psychology','Psychologue','Entretiens psychologiques prescrits par le médecin.','Bureau psychologie','Claire Petit','Psychologue','psychologist'),
-    ('social','Assistance sociale','Accompagnement social et administratif.','Bureau social','Sonia Benali','Assistante sociale','provider'),
-    ('dietitian','Diététicien','Suivi nutritionnel individualisé.','Bureau nutrition','Julien Perrin','Diététicien','provider')
-), directory_rows as (
-  insert into public.care_team_directory (facility_id, full_name, member_type, specialty, active)
-  select f.id, p.full_name, p.member_type, p.specialty, true
-  from facility f cross join providers p
-  where not exists (
-    select 1 from public.care_team_directory d
-    where d.facility_id=f.id and lower(d.full_name)=lower(p.full_name)
-  )
-  returning id, facility_id, full_name
+    ('technique01@demo.aura.test','Intervenante piscine'),
+    ('technique02@demo.aura.test','Boxe-thérapie'),
+    ('technique07@demo.aura.test','Équithérapie'),
+    ('technique03@demo.aura.test','Assistante sociale'),
+    ('technique06@demo.aura.test','Diététicien')
+)
+update public.facility_memberships fm
+set role='provider'::public.app_role
+from public.profiles p, facility f, mapped m
+where fm.user_id=p.id and fm.facility_id=f.id and p.email=m.email and fm.active=true;
+
+with facility as (
+  select id from public.facilities where active = true order by created_at limit 1
+), mapped(email,specialty) as (
+  values
+    ('technique01@demo.aura.test','Intervenante piscine'),
+    ('technique02@demo.aura.test','Boxe-thérapie'),
+    ('technique07@demo.aura.test','Équithérapie'),
+    ('technique03@demo.aura.test','Assistante sociale'),
+    ('technique06@demo.aura.test','Diététicien')
+)
+insert into public.care_team_directory (facility_id, full_name, member_type, specialty, user_id, active)
+select f.id,p.full_name,'facilitator',m.specialty,p.id,true
+from facility f cross join mapped m join public.profiles p on p.email=m.email
+where not exists (
+  select 1 from public.care_team_directory d where d.facility_id=f.id and d.user_id=p.id and d.active=true
+);
+
+with facility as (
+  select id from public.facilities where active = true order by created_at limit 1
+), providers(code,title,description,location,email,specialty) as (
+  values
+    ('pool','Piscine','Séances aquatiques encadrées sur prescription.','Piscine thérapeutique','technique01@demo.aura.test','Intervenante piscine'),
+    ('boxing','Boxe-thérapie','Travail corporel, confiance et régulation émotionnelle.','Salle de sport','technique02@demo.aura.test','Boxe-thérapie'),
+    ('equine','Équithérapie','Médiation thérapeutique avec le cheval.','Centre équestre partenaire','technique07@demo.aura.test','Équithérapie'),
+    ('social','Assistance sociale','Accompagnement social et administratif.','Bureau social','technique03@demo.aura.test','Assistante sociale'),
+    ('dietitian','Diététicien','Suivi nutritionnel individualisé.','Bureau nutrition','technique06@demo.aura.test','Diététicien')
 )
 insert into public.activity_services (facility_id,code,title,description,default_location,clinician_id,active)
 select f.id,p.code,p.title,p.description,p.location,d.id,true
 from facility f
 cross join providers p
-left join public.care_team_directory d on d.facility_id=f.id and lower(d.full_name)=lower(p.full_name)
+join public.profiles u on u.email=p.email
+join public.care_team_directory d on d.facility_id=f.id and d.user_id=u.id and d.active=true
+on conflict (facility_id,code) do update set
+  title=excluded.title,
+  description=excluded.description,
+  default_location=excluded.default_location,
+  clinician_id=excluded.clinician_id,
+  active=true;
+
+-- Psychologue : on réutilise le compte Claire Petit déjà actif et déjà lié au répertoire.
+with facility as (
+  select id from public.facilities where active = true order by created_at limit 1
+)
+insert into public.activity_services (facility_id,code,title,description,default_location,clinician_id,active)
+select f.id,'psychology','Psychologue','Entretiens psychologiques prescrits par le médecin.','Bureau psychologie',d.id,true
+from facility f
+join public.profiles p on p.email='claire.petit@aura-demo.test'
+join public.care_team_directory d on d.facility_id=f.id and d.user_id=p.id and d.active=true
 on conflict (facility_id,code) do update set
   title=excluded.title,
   description=excluded.description,
