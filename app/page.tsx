@@ -1,105 +1,25 @@
 import Link from "next/link";
-import { AuraCopy } from "@/components/aura-copy";
+import type { Metadata } from "next";
+import "./homepage.css";
 
-const impactMetrics = [
-  ["PAGES ÉVITÉES · EST.", "3 852", "papier potentiellement évité"],
-  ["ÉCHANGES NUMÉRIQUES", "2 460", "notifications et échanges AURA"],
-  ["DÉPLACEMENTS ÉVITÉS · EST.", "74", "démarches administratives"],
-  ["CO₂e ÉVITÉ · EST.", "186 kg", "simulation non certifiée"],
+export const metadata: Metadata = { title: "AURA | Un séjour plus simple. Une clinique mieux coordonnée.", description: "Du temps pour les équipes, des repères pour les patients. Découvrez AURA et lancez un pilote dans votre clinique." };
+const demo = "mailto:contact@auradh.com?subject=Demande%20de%20d%C3%A9monstration%20AURA";
+const pilot = "mailto:contact@auradh.com?subject=Lancer%20un%20pilote%20AURA";
+const benefits = [
+["01", "Du temps pour l’essentiel", "Planning, demandes et informations réunis : moins de recherches, d’appels et de relances pour les équipes."],
+["02", "Une équipe mieux coordonnée", "Patients, soignants et accueil partagent les informations utiles selon leur rôle. Les décisions et mouvements sont tracés."],
+["03", "Un patient mieux accompagné", "Rendez-vous, activités, visites et permissions : des repères clairs pour savoir ce qui l’attend pendant son séjour."],
+["04", "Une expérience multilingue", "Des interfaces disponibles en plusieurs langues pour faciliter la compréhension et accompagner des publics différents."],
+["05", "Moins de papier au quotidien", "Demandes et validations numériques réduisent les impressions et les démarches administratives."],
+["06", "Un impact à suivre", "AURA Performance & Impact aide à suivre l’activité et les estimations d’impact. Le pilote permet d’évaluer les gains dans votre établissement."]
 ];
-
-const journey = [
-  ["Patient", "Consulte son séjour et fait ses demandes."],
-  ["Soignants", "Valident et mettent à jour les informations utiles."],
-  ["Accueil", "Enregistre les mouvements réels."],
-  ["Direction", "Suit l’activité avec une vue opérationnelle commune."],
-];
-
-export default function HomePage() {
-  return (
-    <main className="landing landing-v2 landing-simplified">
-      <header className="topbar topbar-v2">
-        <Link href="/" className="brand"><span className="brand-mark">A</span><span>AURA</span></Link>
-        <nav className="public-nav" aria-label="Navigation publique">
-          <a href="#solution">Solution</a>
-          <Link href="/performance-impact">Performance & Impact</Link>
-          <Link href="/demo">Démo</Link>
-          <Link className="button button-secondary" href="/login">Se connecter</Link>
-        </nav>
-      </header>
-
-      <section className="hero hero-v2 hero-simplified">
-        <div className="hero-copy">
-          <div className="eyebrow">AURA · orchestration du séjour patient</div>
-          <h1><AuraCopy id="heroTitle" /></h1>
-          <p className="hero-lead"><AuraCopy id="heroLead" /></p>
-          <div className="hero-actions">
-            <a className="button button-primary button-large" href="mailto:contact@auradh.com?subject=Demande%20de%20d%C3%A9monstration%20AURA"><AuraCopy id="requestDemo" /></a>
-            <Link className="button button-secondary button-large" href="/demo"><AuraCopy id="discoverTwoMinutes" /></Link>
-          </div>
-          <div className="market-chips" aria-label="Marchés AURA">
-            <span>AURA Core</span><span>France</span><span>Algérie</span><span>Multi-établissements</span>
-          </div>
-        </div>
-
-        <div className="product-preview product-preview-simplified" aria-label="Aperçu d’AURA">
-          <div className="preview-top">
-            <div><span className="preview-kicker">Aujourd’hui</span><strong>Le séjour en un coup d’œil</strong></div>
-            <span className="badge badge-success"><span className="status-dot"/>Temps réel</span>
-          </div>
-          <div className="preview-grid">
-            <article className="preview-card preview-card-main"><span>10:30</span><strong>Entretien psychologue</strong><small>Salle 214 · 45 min</small></article>
-            <article className="preview-card"><span>Permission</span><strong>Double validation</strong><small>Médecin + cadre</small></article>
-            <article className="preview-card"><span>Présence</span><strong>Temps réel</strong><small>Départ et retour tracés</small></article>
-            <article className="preview-card preview-card-impact"><span>Impact</span><strong>3 852 pages</strong><small>évitées · estimation démo</small></article>
-          </div>
-          <div className="preview-footer"><span className="status-dot"/> Informations partagées selon le rôle de chacun</div>
-        </div>
-      </section>
-
-      <section className="public-value-band" aria-label="Valeur AURA">
-        <div><strong><AuraCopy id="pillarPatientTitle" /></strong><span><AuraCopy id="pillarPatientText" /></span></div>
-        <div><strong><AuraCopy id="pillarTeamTitle" /></strong><span><AuraCopy id="pillarTeamText" /></span></div>
-        <div><strong><AuraCopy id="pillarPerformanceTitle" /></strong><span><AuraCopy id="pillarPerformanceText" /></span></div>
-        <div><strong><AuraCopy id="pillarImpactTitle" /></strong><span><AuraCopy id="pillarImpactText" /></span></div>
-      </section>
-
-      <section id="solution" className="public-section public-section-simplified">
-        <div className="section-heading"><span className="eyebrow">Solution</span><h2><AuraCopy id="valueTitle" /></h2><p><AuraCopy id="valueLead" /></p></div>
-        <div className="public-pillars">
-          <article><span>01</span><h3><AuraCopy id="pillarPatientTitle" /></h3><p><AuraCopy id="pillarPatientText" /></p></article>
-          <article><span>02</span><h3><AuraCopy id="pillarTeamTitle" /></h3><p><AuraCopy id="pillarTeamText" /></p></article>
-          <article><span>03</span><h3><AuraCopy id="pillarPerformanceTitle" /></h3><p><AuraCopy id="pillarPerformanceText" /></p></article>
-          <article><span>04</span><h3><AuraCopy id="pillarImpactTitle" /></h3><p><AuraCopy id="pillarImpactText" /></p></article>
-        </div>
-      </section>
-
-      <section id="impact" className="public-section public-impact-section">
-        <div className="public-impact-copy">
-          <span className="eyebrow">AURA Impact</span>
-          <h2>Mesurer l’impact positif du parcours numérique</h2>
-          <p><AuraCopy id="impactLead" /></p>
-          <div className="impact-demo-note"><strong>Données de démonstration</strong><span><AuraCopy id="demoDataNote" /></span></div>
-          <div style={{ marginTop: 18 }}><Link className="button button-secondary" href="/performance-impact">Découvrir Performance & Impact</Link></div>
-        </div>
-        <div className="public-impact-metrics">
-          {impactMetrics.map(([label, value, detail]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>)}
-        </div>
-      </section>
-
-      <section id="fonctionnement" className="public-section public-section-soft public-section-simplified">
-        <div className="section-heading"><span className="eyebrow">Un fonctionnement évident</span><h2>Chacun voit uniquement ce dont il a besoin.</h2></div>
-        <div className="journey-grid journey-grid-simplified">
-          {journey.map(([title, text], index) => <article key={title}><span>{index + 1}</span><div><h3>{title}</h3><p>{text}</p></div></article>)}
-        </div>
-      </section>
-
-      <section className="sales-cta sales-cta-simplified">
-        <div><span className="eyebrow">AURA FR · AURA DZ</span><h2><AuraCopy id="pilotTitle" /></h2><p><AuraCopy id="pilotLead" /></p><div style={{ marginTop: 14 }}><Link href="/commercial" className="text-link">Voir la présentation commerciale →</Link></div></div>
-        <a className="button button-primary button-large" href="mailto:contact@auradh.com?subject=Pilote%20AURA"><AuraCopy id="requestDemo" /></a>
-      </section>
-
-      <footer className="public-footer public-footer-simplified"><div className="brand"><span className="brand-mark">A</span>AURA</div><p>Plateforme d’orchestration du séjour patient · contact@auradh.com</p></footer>
-    </main>
-  );
-}
+export default function HomePage() { return <main className="aura-home">
+<header className="ah-nav"><Link href="/" className="ah-brand"><span>A</span>AURA</Link><nav aria-label="Navigation publique"><a className="ah-nav-detail" href="#benefices">Les bénéfices</a><a className="ah-nav-detail" href="#video">Voir AURA</a><Link className="ah-btn ah-outline" href="/login">Se connecter</Link></nav></header>
+<section className="ah-hero"><div><p className="ah-kicker">LE LIEN ENTRE VOS ÉQUIPES ET VOS PATIENTS</p><h1>Moins de friction.<br/><em>Plus d’humain.</em></h1><p className="ah-lead">Un séjour plus simple pour le patient.<br/>Une journée mieux coordonnée pour la clinique.</p><p className="ah-intro">AURA rassemble le parcours quotidien dans un même espace : planning, permissions, visites et informations utiles. Pour que chacun retrouve du temps pour l’essentiel.</p><div className="ah-actions"><a className="ah-btn ah-primary" href={demo}>Demander une démo ↗</a><a className="ah-btn ah-outline" href="#video">Découvrir AURA ↓</a></div><p className="ah-fine">Patients · Soignants · Accueil · Direction</p></div><div className="ah-product"><div className="ah-product-head"><span>AURA / PULSE</span><span className="ah-live">● Vue partagée</span></div><div className="ah-product-body"><span className="ah-kicker">LA CLINIQUE EN UN COUP D’ŒIL</span><h2>Une journée.<br/>Une vision commune.</h2><img src="/aura-pulse.jpg" alt="Écran AURA Pulse : patients, permissions, rendez-vous et visites, avec des données fictives" width="1200" height="750"/><div className="ah-product-foot"><span>✓ Décisions tracées</span><span>✓ Informations centralisées</span></div></div><div className="ah-floating">Moins de relances.<br/><strong>Plus de sérénité.</strong></div></div></section>
+<div className="ah-band"><span>Un parcours connecté</span><span>Des accès selon le rôle</span><span>Une expérience multilingue</span><span>Un quotidien avec moins de papier</span></div>
+<section id="benefices" className="ah-section"><p className="ah-kicker">UNE VALEUR CONCRÈTE, CHAQUE JOUR</p><h2>Bien plus qu’un outil.<br/>Un quotidien qui respire.</h2><div className="ah-grid">{benefits.map(([n,title,text])=><article key={n}><span className="ah-number">{n}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+<section id="video" className="ah-section ah-video"><div><p className="ah-kicker">AURA EN IMAGES</p><h2>Voyez le lien<br/>prendre vie.</h2><p>Une courte présentation de l’application : la vue d’ensemble, la coordination avec AURA Pulse et le suivi avec AURA Impact.</p><p className="ah-fine">Écrans réels de la démonstration · données fictives · vidéo sans audio</p><Link className="ah-text-link" href="/demo">Explorer la présentation détaillée ↗</Link></div><div><video controls playsInline preload="none" poster="/aura-pulse.jpg" aria-label="Présentation vidéo de l’application AURA"><source src="/aura-presentation.mp4" type="video/mp4"/><track kind="captions" src="/aura-presentation.vtt" srcLang="fr" label="Français" default/>Votre navigateur ne permet pas de lire la vidéo.</video><p className="ah-fine">Vue d’ensemble → Coordination → Impact</p></div></section>
+<section className="ah-section ah-eco"><div><p className="ah-kicker">UN PARCOURS PLUS SOBRE</p><h2>Moins de papier.<br/>Des habitudes qui évoluent.</h2></div><div><p>Une permission validée en ligne. Une information disponible sans impression. Une démarche qui évite une relance : la transition se construit dans les gestes du quotidien.</p><p>Avec un pilote AURA, suivez vos usages et évaluez les gains de temps et de papier dans votre clinique.</p><Link className="ah-text-link" href="/performance-impact">Découvrir Performance & Impact ↗</Link></div></section>
+<section id="pilote" className="ah-section ah-pilot"><p className="ah-kicker">COMMENÇONS DANS VOTRE CLINIQUE</p><h2>Une démo pour comprendre.<br/>Un pilote pour mesurer.</h2><p>Définissons ensemble un périmètre, les équipes participantes et les indicateurs à suivre. Testez AURA dans votre quotidien et évaluez sa valeur sur le terrain.</p><div className="ah-actions"><a className="ah-btn ah-primary" href={demo}>Demander une démo ↗</a><a className="ah-btn ah-outline" href={pilot}>Lancer un pilote ↗</a></div></section>
+<footer className="ah-footer"><Link className="ah-brand" href="/"><span>A</span>AURA</Link><p>Le séjour patient, mieux orchestré.</p><a href="mailto:contact@auradh.com">contact@auradh.com</a><Link href="/login">Se connecter ↗</Link></footer>
+</main>; }
