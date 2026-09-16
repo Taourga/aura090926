@@ -1,0 +1,108 @@
+.patient-permission-quick-add {
+  margin: 10px 0 14px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.patient-permission-quick-head {
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+
+.patient-permission-quick-head h2 {
+  margin: 2px 0 2px;
+  font-size: 1.05rem;
+}
+
+.patient-permission-quick-head .card-subtitle {
+  margin: 0;
+  font-size: .88rem;
+}
+
+.patient-permission-quick-add .card-body {
+  padding: 8px 16px 14px;
+}
+
+.patient-permission-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.patient-permission-presets .button {
+  min-height: 38px;
+  flex: 0 0 auto;
+}
+
+.patient-permission-inline-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #dbe7e7);
+}
+
+.patient-permission-inline-form .form-grid {
+  margin-top: 8px;
+}
+
+.patient-permission-inline-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.patient-permission-inline-actions small {
+  color: var(--muted, #678);
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .patient-permission-quick-add {
+    margin: 8px 0 10px;
+  }
+
+  .patient-permission-quick-head {
+    align-items: flex-start;
+    padding: 12px 12px 6px;
+  }
+
+  .patient-permission-quick-head .button {
+    display: none;
+  }
+
+  .patient-permission-quick-add .card-body {
+    padding: 8px 12px 12px;
+  }
+
+  .patient-permission-presets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .patient-permission-presets .button {
+    min-width: 0;
+    width: 100%;
+    padding-inline: 8px;
+    font-size: .8rem;
+  }
+
+  .patient-permission-inline-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-permission-inline-actions {
+    align-items: stretch;
+  }
+
+  .patient-permission-inline-actions .button {
+    flex: 1 1 auto;
+  }
+
+  .patient-permission-inline-actions small {
+    width: 100%;
+    margin-left: 0;
+  }
+}
