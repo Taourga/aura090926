@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 type FacilityRow={facility_id:string;role:string;is_active:boolean};
@@ -13,7 +14,7 @@ async function context(){
   return {supabase,user,facility};
 }
 
-async function resolvePatient(supabase:any,patientKey:string){
+async function resolvePatient(supabase:SupabaseClient,patientKey:string){
   if(patientKey.startsWith("demo:")){
     const rosterId=patientKey.slice(5);
     const {data:roster}=await supabase.from("clinic_patient_roster").select("id,linked_profile_id,display_name").eq("id",rosterId).maybeSingle();
