@@ -19,27 +19,14 @@ type Trusted = { patient_id: string; full_name: string; relationship: string; ph
 type Permission = { id: string; patient_id?: string; departure_at: string; return_at: string; reason: string | null; status: string; returned_at?: string | null };
 type Appointment = { id: string; title: string; starts_at: string; ends_at?: string; location: string | null };
 type Enrollment = { id: string; activity: Rel<{ title: string; starts_at: string; location: string | null; requires_prescription: boolean }> };
-type DemoScenario = {
-  id: string; roster_id: string; presence: "present" | "out"; planned_discharge_at: string | null; permission_status: string | null;
-  permission_departure_at: string | null; permission_return_at: string | null; next_appointment_at: string | null; next_appointment_title: string | null;
-  next_appointment_location: string | null; prescribed_activity_title: string | null; prescribed_activity_at: string | null; prescribed_activity_location: string | null;
-  mobile_phone: string | null; personal_email: string | null; city: string | null; trusted_contact_name: string | null; trusted_contact_relationship: string | null;
-  trusted_contact_phone: string | null; trusted_contact_email: string | null;
-};
-type UnifiedPatient = {
-  key: string; profileId: string | null; rosterId: string; full_name: string; phone: string | null; room_number: string | null; presence: "present" | "out";
-  planned_discharge_at: string | null; permission_status: string | null; isDemo: boolean; scenario: DemoScenario | null; lateReturn: boolean;
-};
+type DemoScenario = { id: string; roster_id: string; presence: "present" | "out"; planned_discharge_at: string | null; permission_status: string | null; permission_departure_at: string | null; permission_return_at: string | null; next_appointment_at: string | null; next_appointment_title: string | null; next_appointment_location: string | null; prescribed_activity_title: string | null; prescribed_activity_at: string | null; prescribed_activity_location: string | null; mobile_phone: string | null; personal_email: string | null; city: string | null; trusted_contact_name: string | null; trusted_contact_relationship: string | null; trusted_contact_phone: string | null; trusted_contact_email: string | null };
+type UnifiedPatient = { key: string; profileId: string | null; rosterId: string; full_name: string; phone: string | null; room_number: string | null; presence: "present" | "out"; planned_discharge_at: string | null; permission_status: string | null; isDemo: boolean; scenario: DemoScenario | null; lateReturn: boolean };
 
 const one = <T,>(value: Rel<T>) => Array.isArray(value) ? value[0] : value;
 const initials = (name: string) => name.split(" ").filter(Boolean).slice(0,2).map((part)=>part[0]).join("").toUpperCase();
 const demoCoordinatesFor = (key: string, name: string) => {
   const seed = Array.from(key).reduce((acc, char) => ((acc * 31) + char.charCodeAt(0)) >>> 0, 17);
-  const places = [
-    { city:"Paris", postalCode:"75015", address:"18 avenue des Tilleuls" }, { city:"Nanterre", postalCode:"92000", address:"24 rue des Acacias" },
-    { city:"Boulogne-Billancourt", postalCode:"92100", address:"11 allée des Lilas" }, { city:"Créteil", postalCode:"94000", address:"32 avenue du Parc" },
-    { city:"Saint-Denis", postalCode:"93200", address:"7 rue des Écoles" }, { city:"Versailles", postalCode:"78000", address:"15 rue du Belvédère" },
-  ];
+  const places = [{ city:"Paris", postalCode:"75015", address:"18 avenue des Tilleuls" },{ city:"Nanterre", postalCode:"92000", address:"24 rue des Acacias" },{ city:"Boulogne-Billancourt", postalCode:"92100", address:"11 allée des Lilas" },{ city:"Créteil", postalCode:"94000", address:"32 avenue du Parc" },{ city:"Saint-Denis", postalCode:"93200", address:"7 rue des Écoles" },{ city:"Versailles", postalCode:"78000", address:"15 rue du Belvédère" }];
   const place = places[seed % places.length];
   const p1 = String(10 + (seed % 80)).padStart(2,"0"); const p2 = String(10 + ((seed >>> 8) % 80)).padStart(2,"0"); const p3 = String(10 + ((seed >>> 16) % 80)).padStart(2,"0");
   const emailName = name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,".").replace(/^\.|\.$/g,"");
@@ -83,16 +70,13 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
     const p = patientById.get(r.linked_profile_id); if (!p) return [];
     const stay = stayByPatient.get(p.id); const permission = permissionByPatient.get(p.id);
     const lateReturn = permission?.status === "departed" && !permission.returned_at && new Date(permission.return_at).getTime() < nowMs;
-    return [{ key:p.id, profileId:p.id, rosterId:r.id, full_name:p.full_name, phone:p.phone, room_number:stay?.room_number || r.room_number,
-      presence:(stay?.presence === "out" ? "out" : "present") as "present" | "out", planned_discharge_at:stay?.planned_discharge_at || null,
-      permission_status:permission?.status || null, isDemo:false, scenario:null, lateReturn }];
+    return [{ key:p.id, profileId:p.id, rosterId:r.id, full_name:p.full_name, phone:p.phone, room_number:stay?.room_number || r.room_number, presence:(stay?.presence === "out" ? "out" : "present") as "present" | "out", planned_discharge_at:stay?.planned_discharge_at || null, permission_status:permission?.status || null, isDemo:false, scenario:null, lateReturn }];
   });
   const demoPatients: UnifiedPatient[] = scopedRoster.flatMap((r)=>{
     if (r.linked_profile_id) return [];
     const scenario = scenarioByRoster.get(r.id); if (!scenario) return [];
     const lateReturn = scenario.permission_status === "departed" && Boolean(scenario.permission_return_at) && new Date(scenario.permission_return_at as string).getTime() < nowMs;
-    return [{ key:`demo:${r.id}`, profileId:null, rosterId:r.id, full_name:r.display_name, phone:scenario.mobile_phone, room_number:r.room_number, presence:scenario.presence,
-      planned_discharge_at:scenario.planned_discharge_at, permission_status:scenario.permission_status, isDemo:true, scenario, lateReturn }];
+    return [{ key:`demo:${r.id}`, profileId:null, rosterId:r.id, full_name:r.display_name, phone:scenario.mobile_phone, room_number:r.room_number, presence:scenario.presence, planned_discharge_at:scenario.planned_discharge_at, permission_status:scenario.permission_status, isDemo:true, scenario, lateReturn }];
   });
 
   const basePatients = [...realPatients,...demoPatients].sort((a,b)=>a.full_name.localeCompare(b.full_name,"fr"));
@@ -120,16 +104,10 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
   ]) : [{data:[]},{data:[]},{data:[]}];
 
   const scenario = selected?.scenario || null;
-  const permissionList: Permission[] = selected?.isDemo && scenario?.permission_status && scenario.permission_departure_at && scenario.permission_return_at
-    ? [{ id:`demo-permission-${scenario.id}`, departure_at:scenario.permission_departure_at, return_at:scenario.permission_return_at, reason:"Scénario de démonstration", status:scenario.permission_status, returned_at:null }]
-    : ((permissions || []) as Permission[]);
-  const appointmentList: Appointment[] = selected?.isDemo && scenario?.next_appointment_at
-    ? [{ id:`demo-appointment-${scenario.id}`, title:scenario.next_appointment_title || "Rendez-vous médical", starts_at:scenario.next_appointment_at, location:scenario.next_appointment_location }]
-    : ((appointments || []) as Appointment[]);
+  const permissionList: Permission[] = selected?.isDemo && scenario?.permission_status && scenario.permission_departure_at && scenario.permission_return_at ? [{ id:`demo-permission-${scenario.id}`, departure_at:scenario.permission_departure_at, return_at:scenario.permission_return_at, reason:"Scénario de démonstration", status:scenario.permission_status, returned_at:null }] : ((permissions || []) as Permission[]);
+  const appointmentList: Appointment[] = selected?.isDemo && scenario?.next_appointment_at ? [{ id:`demo-appointment-${scenario.id}`, title:scenario.next_appointment_title || "Rendez-vous médical", starts_at:scenario.next_appointment_at, location:scenario.next_appointment_location }] : ((appointments || []) as Appointment[]);
   const enrollmentList = (enrollments || []) as Enrollment[];
-  const prescribedActivities = selected?.isDemo
-    ? (scenario?.prescribed_activity_title && scenario.prescribed_activity_at ? [{ id:`demo-activity-${scenario.id}`, title:scenario.prescribed_activity_title, starts_at:scenario.prescribed_activity_at, location:scenario.prescribed_activity_location }] : [])
-    : enrollmentList.filter(item=>one(item.activity)?.requires_prescription).map((item)=>{ const a=one(item.activity); return { id:item.id,title:a?.title || "Activité",starts_at:a?.starts_at || "",location:a?.location || null }; });
+  const prescribedActivities = selected?.isDemo ? (scenario?.prescribed_activity_title && scenario.prescribed_activity_at ? [{ id:`demo-activity-${scenario.id}`, title:scenario.prescribed_activity_title, starts_at:scenario.prescribed_activity_at, location:scenario.prescribed_activity_location }] : []) : enrollmentList.filter(item=>one(item.activity)?.requires_prescription).map((item)=>{ const a=one(item.activity); return { id:item.id,title:a?.title || "Activité",starts_at:a?.starts_at || "",location:a?.location || null }; });
   const otherActivities = selected?.isDemo ? [] : enrollmentList.filter(item=>!one(item.activity)?.requires_prescription);
 
   const activePermission = permissionList.find((p)=>["submitted","waiting","approved","departed"].includes(p.status));
@@ -160,25 +138,16 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
     {lateCount>0 && <div className="care-late-global-alert"><strong>⚠ {lateCount} retour{lateCount>1?"s":""} de permission en retard</strong><span>Les patients concernés sont signalés en rouge dans la liste.</span></div>}
     <PatientPresenceFilters />
     <nav className="patient-dashboard-filters" aria-label="Filtres patients">{filterLink("all","Tous",basePatients.length)}{filterLink("present","Présents",presentCount)}{filterLink("out","Absents / permission",outCount)}{filterLink("permission","À valider",pendingCount)}{filterLink("approved","Permission validée",approvedCount)}</nav>
-
     <div className="doctor-simple-layout">
       <aside className="doctor-simple-list">
         {patientList.map((patient)=><a key={patient.key} href={`/portal/patients?filter=${filter}${queryPresence}&patient=${encodeURIComponent(patient.key)}`} className={`doctor-simple-patient${selected?.key===patient.key?" active":""}${patient.lateReturn?" patient-late-return":""}`}><span>{initials(patient.full_name)}</span><div><strong>{patient.full_name}</strong><small>Ch. {patient.room_number || "—"} · {patient.lateReturn ? "⚠ Retour en retard" : patient.presence === "out" ? "Absent / en permission" : ["submitted","waiting"].includes(patient.permission_status || "") ? "Permission à valider" : "Présent"}</small></div></a>)}
         {!patientList.length && <p className="empty">Aucun patient pour ces filtres.</p>}
       </aside>
-
       <section className="doctor-simple-record" key={selected?.key || "empty"}>
         {selected ? <>
-          <div className="doctor-simple-header">
-            <div><span className="section-kicker">Fiche patient {selected.isDemo && <span className="demo-chip">Données fictives</span>}</span><h2>{selected.full_name}</h2><p>Chambre {selected.room_number || "—"} · {selected.presence === "out" ? "Hors établissement" : "Présent"}{selected.isDemo ? " · patient de contexte non connectable" : ""}</p></div>
-            <div className="doctor-simple-actions"><Link className="button button-secondary button-small" href={planningHref}>◷ Planning</Link></div>
-          </div>
+          <div className="doctor-simple-header"><div><span className="section-kicker">Fiche patient {selected.isDemo && <span className="demo-chip">Données fictives</span>}</span><h2>{selected.full_name}</h2><p>Chambre {selected.room_number || "—"} · {selected.presence === "out" ? "Hors établissement" : "Présent"}{selected.isDemo ? " · patient de contexte non connectable" : ""}</p></div><div className="doctor-simple-actions"><Link className="button button-secondary button-small" href={planningHref}>◷ Planning</Link></div></div>
           {selected.lateReturn && activePermission && <div className="care-late-patient-alert"><strong>⚠ Retour de permission en retard</strong><span>Retour attendu le {formatDateTime(activePermission.return_at)}. Le patient n’est pas encore enregistré comme revenu.</span><Link href={permissionsHref}>Ouvrir la permission →</Link></div>}
-          <div className="doctor-simple-kpis">
-            <div><span>Prochain RDV{currentDoctor?.specialty?` · ${currentDoctor.specialty}`:""}</span><strong>{appointmentList[0] ? formatDateTime(appointmentList[0].starts_at) : "Aucun"}</strong></div>
-            <div><span>Permission</span><strong>{activePermission ? activePermission.status === "approved" ? "Validée" : activePermission.status === "departed" ? (selected.lateReturn?"Retour en retard":"En cours") : "À traiter" : "Aucune"}</strong></div>
-            <div><span>Sortie prévue</span><strong>{selected.planned_discharge_at ? formatDateTime(selected.planned_discharge_at) : "Non prévue"}</strong></div>
-          </div>
+          <div className="doctor-simple-kpis"><div><span>Prochain RDV{currentDoctor?.specialty?` · ${currentDoctor.specialty}`:""}</span><strong>{appointmentList[0] ? formatDateTime(appointmentList[0].starts_at) : "Aucun"}</strong></div><div><span>Permission</span><strong>{activePermission ? activePermission.status === "approved" ? "Validée" : activePermission.status === "departed" ? (selected.lateReturn?"Retour en retard":"En cours") : "À traiter" : "Aucune"}</strong></div><div><span>Sortie prévue</span><strong>{selected.planned_discharge_at ? formatDateTime(selected.planned_discharge_at) : "Non prévue"}</strong></div></div>
           <div className="doctor-simple-grid">
             <article className="doctor-simple-card"><div className="doctor-simple-card-head"><h3>Coordonnées</h3>{hasGeneratedContact && <span className="badge badge-neutral">Complété pour la démo</span>}</div><a className="contact-link" href={`tel:${patientPhone?.replace(/\s+/g,"")}`}>{patientPhone}</a><a className="contact-link" href={`mailto:${patientEmail}`}>{patientEmail}</a><span>{patientAddress}</span></article>
             <article className="doctor-simple-card doctor-simple-card--trusted"><div className="doctor-simple-card-head"><h3>Personne de confiance</h3>{realTrusted && <span className={activePortal?"badge badge-success":"badge badge-neutral"}>{activePortal?"Portail actif":"Contact uniquement"}</span>}</div>{trustedName ? <><strong>{trustedName} · {trustedRelationship || "Proche"}</strong>{trustedPhone ? <a className="contact-link" href={`tel:${trustedPhone.replace(/\s+/g,"")}`}>☎ {trustedPhone}</a> : <span>Téléphone non renseigné</span>}{trustedEmail ? <a className="button button-secondary button-small" href={`mailto:${trustedEmail}`}>✉ Envoyer un email</a> : <span>Email non renseigné</span>}{isEmergencyContact && <small>Contact d’urgence</small>}</> : <span>Non renseignée</span>}</article>
@@ -186,7 +155,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
             <article className="doctor-simple-card"><div className="doctor-simple-card-head"><h3>Permissions</h3><Link href={permissionsHref}>{selected.isDemo ? "Voir les permissions →" : "Traiter →"}</Link></div>{permissionList.length ? permissionList.slice(0,3).map((p)=><div className={`doctor-simple-row${p.status==="departed" && !p.returned_at && new Date(p.return_at).getTime()<nowMs?" row-late-return":""}`} key={p.id}><div><strong>{formatDateTime(p.departure_at)}</strong><span>Retour {formatDateTime(p.return_at)}</span></div><StatusBadge status={p.status as PermissionStatus} /></div>) : <span>Aucune permission.</span>}</article>
             <article className="doctor-simple-card doctor-simple-card--prescribed"><div className="doctor-simple-card-head"><h3>Activités prescrites</h3><span className="badge badge-info">{prescribedActivities.length}</span></div>{prescribedActivities.length?prescribedActivities.map(a=><div className="doctor-simple-row" key={a.id}><strong>{a.title}</strong><span>{formatDateTime(a.starts_at)} · {a.location || "Lieu à confirmer"}</span></div>):<span>Aucune activité prescrite.</span>}</article>
           </div>
-          {!selected.isDemo && <details className="doctor-simple-more"><summary>Plus d’informations</summary><div className="doctor-simple-more-grid"><div><h3>Autres activités</h3>{otherActivities.map((e)=>{ const a=one(e.activity); return <p key={e.id}><strong>{a?.title || "Activité"}</strong><br/><span>{a ? formatDateTime(a.starts_at) : ""}</span></p; })}{!otherActivities.length && <p>Aucune autre activité.</p>}</div>{realTrusted && selected.profileId && <div><h3>Partage avec le proche</h3><TrustedContactConsent patientId={selected.profileId} trustedName={realTrusted.full_name} initialEnabled={activePortal} initialScopes={realTrusted.scopes} initialNotifications={realTrusted.notification_preferences} initialExpiresAt={realTrusted.access_expires_at} initialEmergencyContact={realTrusted.is_emergency_contact} initialPreferredContactMethod={realTrusted.preferred_contact_method} canManage={profile.role === "doctor"} hasPortalAccount={!!realTrusted.user_id} /></div>}</div></details>}
+          {!selected.isDemo && <details className="doctor-simple-more"><summary>Plus d’informations</summary><div className="doctor-simple-more-grid"><div><h3>Autres activités</h3>{otherActivities.map((e)=>{ const a=one(e.activity); return <p key={e.id}><strong>{a?.title || "Activité"}</strong><br/><span>{a ? formatDateTime(a.starts_at) : ""}</span></p>; })}{!otherActivities.length && <p>Aucune autre activité.</p>}</div>{realTrusted && selected.profileId && <div><h3>Partage avec le proche</h3><TrustedContactConsent patientId={selected.profileId} trustedName={realTrusted.full_name} initialEnabled={activePortal} initialScopes={realTrusted.scopes} initialNotifications={realTrusted.notification_preferences} initialExpiresAt={realTrusted.access_expires_at} initialEmergencyContact={realTrusted.is_emergency_contact} initialPreferredContactMethod={realTrusted.preferred_contact_method} canManage={profile.role === "doctor"} hasPortalAccount={!!realTrusted.user_id} /></div>}</div></details>}
         </> : <p className="empty">Aucun patient à afficher.</p>}
       </section>
     </div>
