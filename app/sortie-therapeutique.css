@@ -1,0 +1,54 @@
+.patient-primary-dock > a,
+.doctor-primary-dock > a {
+  min-width: 0;
+}
+
+.patient-primary-copy,
+.doctor-primary-copy {
+  min-width: 0;
+}
+
+.patient-primary-copy strong,
+.doctor-primary-copy strong {
+  white-space: normal;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.portal-section-title {
+  white-space: normal;
+  line-height: 1.1;
+}
+
+.patient-permission-premium h2 {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .doctor-primary-copy strong,
+  .patient-primary-copy strong {
+    font-size: .9rem;
+  }
+
+  .doctor-primary-copy small,
+  .patient-primary-copy small {
+    font-size: .72rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .patient-primary-copy strong,
+  .doctor-primary-copy strong {
+    font-size: .74rem;
+    line-height: 1;
+  }
+
+  .patient-primary-copy small,
+  .doctor-primary-copy small {
+    display: none;
+  }
+
+  .portal-section-title {
+    font-size: .9rem;
+  }
+}
