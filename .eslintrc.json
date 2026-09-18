@@ -1,6 +1,6 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
-  "ignorePatterns": ["next-env.d.ts", ".next/", "out/", "build/", ".qa-runtime/"],
+  "ignorePatterns": ["next-env.d.ts", ".next/", "out/", "build/", ".qa-runtime/", "mobile/**"],
   "rules": {
     "react/no-unescaped-entities": "off",
     "@typescript-eslint/no-unused-vars": ["warn", {
