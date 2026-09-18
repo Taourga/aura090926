@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type {
   ActivityItem,
+  NotificationItem,
   PatientContext,
   PermissionItem,
   PlanningEvent,
@@ -366,5 +367,68 @@ export async function submitPermission(input: {
     p_return_at: input.returnAt,
     p_reason: input.reason.trim() || null,
   });
+  if (error) throw new Error(error.message);
+}
+
+
+export async function fetchNotifications(context: PatientContext): Promise<NotificationItem[]> {
+  const [messagesRes, enrollmentsRes] = await Promise.all([
+    supabase
+      .from("clinical_messages")
+      .select("id,sender_id,body,priority,read_at,created_at")
+      .eq("recipient_id", context.id)
+      .order("created_at", { ascending: false })
+      .limit(60),
+    supabase
+      .from("activity_enrollments")
+      .select("activity_id")
+      .eq("patient_id", context.id),
+  ]);
+
+  if (messagesRes.error) throw new Error(messagesRes.error.message);
+  if (enrollmentsRes.error) throw new Error(enrollmentsRes.error.message);
+
+  const activityIds = [...new Set((enrollmentsRes.data || []).map((item: any) => item.activity_id).filter(Boolean))];
+  let activityUpdates: any[] = [];
+
+  if (activityIds.length) {
+    const { data, error } = await supabase
+      .from("activity_updates")
+      .select("id,activity_id,update_type,message,created_at")
+      .in("activity_id", activityIds)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    activityUpdates = data || [];
+  }
+
+  const items: NotificationItem[] = [
+    ...(messagesRes.data || []).map((item: any) => ({
+      id: "message-" + item.id,
+      createdAt: item.created_at,
+      title: item.priority >= 3 ? "Message prioritaire de l’équipe" : item.priority === 2 ? "Message important de l’équipe" : "Message de l’équipe",
+      body: item.body,
+      kind: "MESSAGE" as const,
+      unread: !item.read_at,
+      priority: Number(item.priority || 1),
+      senderId: item.sender_id,
+    })),
+    ...activityUpdates.map((item: any) => ({
+      id: "activity-update-" + item.id,
+      createdAt: item.created_at,
+      title: item.update_type === "cancelled" ? "Activité annulée" : item.update_type === "rescheduled" ? "Activité modifiée" : "Mise à jour d’activité",
+      body: item.message,
+      kind: "ACTIVITÉ" as const,
+      unread: false,
+      priority: item.update_type === "cancelled" ? 2 : 1,
+      senderId: null,
+    })),
+  ];
+
+  return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function markClinicalSenderRead(senderId: string) {
+  const { error } = await supabase.rpc("mark_clinical_messages_read", { p_sender_id: senderId });
   if (error) throw new Error(error.message);
 }
