@@ -73,3 +73,15 @@ export type PermissionItem = {
   doctorDecision: string | null;
   managerDecision: string | null;
 };
+
+
+export type NotificationItem = {
+  id: string;
+  createdAt: string;
+  title: string;
+  body: string;
+  kind: "MESSAGE" | "ACTIVITÉ";
+  unread: boolean;
+  priority: number;
+  senderId: string | null;
+};
