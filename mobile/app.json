@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "AURA Patient",
+    "slug": "aura-patient",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "aura",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "predictiveBackGestureEnabled": false
+    }
+  }
+}
