@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import type { Session } from "@supabase/supabase-js";
+import type { ComponentProps, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -694,7 +695,7 @@ function PageTitle({ kicker, title, subtitle }: { kicker: string; title: string;
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children }: { children: ReactNode }) {
   return <View style={styles.card}>{children}</View>;
 }
 
@@ -746,7 +747,7 @@ function Field({
 }: {
   label: string;
   multiline?: boolean;
-} & React.ComponentProps<typeof TextInput>) {
+} & ComponentProps<typeof TextInput>) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
