@@ -24,12 +24,14 @@ import {
   facilityNumber,
   facilityText,
   fetchActivities,
+  fetchNotifications,
   fetchPermissions,
   fetchPlanning,
   fetchVisits,
   formatDateOnly,
   formatDateTime,
   loadPatientContext,
+  markClinicalSenderRead,
   submitPermission,
   submitVisit,
   todayKey,
@@ -39,13 +41,14 @@ import { supabase } from "./src/supabase";
 import { colors, radius } from "./src/theme";
 import type {
   ActivityItem,
+  NotificationItem,
   PatientContext,
   PermissionItem,
   PlanningEvent,
   VisitItem,
 } from "./src/types";
 
-type ScreenName = "home" | "planning" | "activities" | "visits" | "permissions" | "profile";
+type ScreenName = "home" | "planning" | "activities" | "visits" | "permissions" | "notifications" | "documents" | "profile";
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -213,6 +216,8 @@ function PatientApp({ context }: { context: PatientContext }) {
         {screen === "activities" && <ActivitiesScreen context={context} />}
         {screen === "visits" && <VisitsScreen context={context} />}
         {screen === "permissions" && <PermissionsScreen context={context} onBack={() => setScreen("home")} />}
+        {screen === "notifications" && <NotificationsScreen context={context} />}
+        {screen === "documents" && <DocumentsScreen />}
         {screen === "profile" && <ProfileScreen context={context} onNavigate={setScreen} />}
       </View>
 
@@ -239,7 +244,7 @@ function BottomNav({
   return (
     <View style={styles.bottomNav}>
       {tabs.map((tab) => {
-        const active = screen === tab.key || (screen === "permissions" && tab.key === "home");
+        const active = screen === tab.key || (["permissions", "notifications", "documents"].includes(screen) && tab.key === "home");
         return (
           <Pressable key={tab.key} style={styles.navItem} onPress={() => onNavigate(tab.key)}>
             <Text style={[styles.navIcon, active && styles.navIconActive]}>{tab.icon}</Text>
@@ -320,6 +325,8 @@ function HomeScreen({
         <QuickAction icon="✦" title="Activités" subtitle="Avec / sans prescription" onPress={() => onNavigate("activities")} />
         <QuickAction icon="♧" title="Visites" subtitle="Prévenir l’accueil" onPress={() => onNavigate("visits")} />
         <QuickAction icon="✓" title="Permissions" subtitle="Demander ou suivre" onPress={() => onNavigate("permissions")} />
+        <QuickAction icon="●" title="Notifications" subtitle="Messages et changements" onPress={() => onNavigate("notifications")} />
+        <QuickAction icon="▤" title="Documents" subtitle="Mon espace documentaire" onPress={() => onNavigate("documents")} />
       </View>
 
       <Card>
@@ -656,6 +663,116 @@ function PermissionsScreen({
   );
 }
 
+
+function NotificationsScreen({ context }: { context: PatientContext }) {
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busySender, setBusySender] = useState("");
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setItems(await fetchNotifications(context));
+    } catch (e) {
+      setError(messageOf(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [context]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function markRead(item: NotificationItem) {
+    if (!item.senderId) return;
+    setBusySender(item.senderId);
+    try {
+      await markClinicalSenderRead(item.senderId);
+      await load();
+    } catch (e) {
+      Alert.alert("Notifications", messageOf(e));
+    } finally {
+      setBusySender("");
+    }
+  }
+
+  const unread = items.filter((item) => item.unread).length;
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.screenContent}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.teal} />}
+    >
+      <PageTitle
+        kicker="CENTRE AURA"
+        title="Notifications"
+        subtitle="Messages de l’équipe et changements concernant les activités auxquelles vous êtes inscrit."
+      />
+      {error ? <ErrorBox message={error} /> : null}
+      <View style={styles.notificationSummary}>
+        <Text style={styles.notificationSummaryNumber}>{unread}</Text>
+        <View style={styles.flexOne}>
+          <Text style={styles.notificationSummaryTitle}>notification{unread > 1 ? "s" : ""} non lue{unread > 1 ? "s" : ""}</Text>
+          <Text style={styles.notificationSummaryText}>Les messages cliniques restent en réception uniquement côté patient.</Text>
+        </View>
+      </View>
+      <Card>
+        {items.length ? items.map((item) => (
+          <View key={item.id} style={[styles.notificationRow, item.unread && styles.notificationUnread]}>
+            <View style={styles.notificationIcon}>
+              <Text style={styles.notificationIconText}>{item.kind === "MESSAGE" ? "✉" : "✦"}</Text>
+            </View>
+            <View style={styles.flexOne}>
+              <View style={styles.notificationHead}>
+                <Text style={styles.listTitle}>{item.title}</Text>
+                {item.unread ? <View style={styles.unreadDot} /> : null}
+              </View>
+              <Text style={styles.cardText}>{item.body}</Text>
+              <Text style={styles.listMeta}>{formatDateTime(item.createdAt, context)}</Text>
+              {item.unread && item.senderId ? (
+                <Pressable
+                  onPress={() => void markRead(item)}
+                  disabled={busySender === item.senderId}
+                  style={styles.markReadButton}
+                >
+                  <Text style={styles.markReadText}>{busySender === item.senderId ? "Mise à jour…" : "Marquer comme lu"}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {item.priority >= 2 ? <Badge label={item.priority >= 3 ? "Prioritaire" : "Important"} tone={item.priority >= 3 ? "danger" : "warning"} /> : null}
+          </View>
+        )) : !loading ? <Text style={styles.emptyText}>Aucune notification pour le moment.</Text> : null}
+      </Card>
+    </ScrollView>
+  );
+}
+
+function DocumentsScreen() {
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent}>
+      <PageTitle
+        kicker="DOSSIER PATIENT"
+        title="Documents"
+        subtitle="L’espace destiné aux ordonnances, comptes rendus et documents de séjour."
+      />
+      <View style={styles.documentPlaceholder}>
+        <View style={styles.documentIcon}><Text style={styles.documentIconText}>▤</Text></View>
+        <Text style={styles.cardTitle}>Module prêt à connecter</Text>
+        <Text style={styles.documentText}>
+          Aucun document n’est exposé dans cette version du MVP : le backend AURA actuel ne possède pas encore de module documentaire patient dédié.
+        </Text>
+        <Text style={styles.documentNote}>
+          Cette approche évite de créer une base parallèle ou de modifier les données de production. L’écran est déjà prévu pour accueillir le futur module sécurisé.
+        </Text>
+      </View>
+    </ScrollView>
+  );
+}
+
 function ProfileScreen({
   context,
   onNavigate,
@@ -678,6 +795,8 @@ function ProfileScreen({
         <SecondaryRow icon="✓" title="Permissions de sortie" onPress={() => onNavigate("permissions")} />
         <SecondaryRow icon="◷" title="Mon planning" onPress={() => onNavigate("planning")} />
         <SecondaryRow icon="♧" title="Mes visites" onPress={() => onNavigate("visits")} />
+        <SecondaryRow icon="●" title="Notifications" onPress={() => onNavigate("notifications")} />
+        <SecondaryRow icon="▤" title="Documents" onPress={() => onNavigate("documents")} />
       </Card>
       <PrimaryButton label="Se déconnecter" secondary onPress={() => supabase.auth.signOut()} />
       <Text style={styles.versionText}>AURA Patient · MVP mobile 0.1</Text>
@@ -1076,6 +1195,68 @@ const styles = StyleSheet.create({
   permissionRow: { paddingVertical: 13, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   permissionHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   waitingText: { color: colors.warning, fontSize: 12, fontWeight: "700", marginTop: 7 },
+  notificationSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.navy,
+    borderRadius: radius.medium,
+    padding: 16,
+  },
+  notificationSummaryNumber: { color: "white", fontSize: 30, fontWeight: "900", minWidth: 36, textAlign: "center" },
+  notificationSummaryTitle: { color: "white", fontSize: 14, fontWeight: "900" },
+  notificationSummaryText: { color: "#c7d9e1", fontSize: 11, marginTop: 2, lineHeight: 16 },
+  notificationRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingVertical: 13,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
+  notificationUnread: { backgroundColor: "#f4fbfa", marginHorizontal: -8, paddingHorizontal: 8, borderRadius: 10 },
+  notificationIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.mint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationIconText: { color: colors.tealDeep, fontSize: 16, fontWeight: "900" },
+  notificationHead: { flexDirection: "row", alignItems: "center", gap: 7 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.teal },
+  markReadButton: { alignSelf: "flex-start", marginTop: 8, paddingVertical: 5, paddingHorizontal: 8 },
+  markReadText: { color: colors.tealDeep, fontSize: 12, fontWeight: "900" },
+  documentPlaceholder: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.large,
+    padding: 24,
+    alignItems: "center",
+  },
+  documentIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: colors.mint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  documentIconText: { color: colors.tealDeep, fontSize: 27, fontWeight: "900" },
+  documentText: { color: colors.muted, textAlign: "center", lineHeight: 21, marginTop: 3 },
+  documentNote: {
+    color: colors.ink,
+    textAlign: "center",
+    lineHeight: 19,
+    fontSize: 12,
+    marginTop: 14,
+    backgroundColor: colors.blue,
+    borderRadius: 10,
+    padding: 12,
+  },
   infoRow: { paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   infoLabel: { color: colors.muted, fontSize: 11, fontWeight: "700" },
   infoValue: { color: colors.ink, fontSize: 15, fontWeight: "800", marginTop: 3 },
