@@ -10,9 +10,11 @@ Application mobile patient isolée du site web AURA.
 - Activités avec/sans prescription, inscription et désinscription
 - Visites : consultation et déclaration d'un visiteur
 - Permissions : demande et suivi des validations
+- Notifications : messages de l'équipe et mises à jour des activités
+- Documents : écran prêt à connecter, sans modification du schéma de production
 - Profil, établissement, chambre et déconnexion
 
-Le MVP réutilise le projet Supabase AURA existant, ses RPC et ses règles RLS. Aucune migration de base de données n'est nécessaire.
+Le MVP réutilise le projet Supabase AURA existant, ses RPC et ses règles RLS. Aucune migration de base de données n'est nécessaire. Le module Documents reste volontairement sans persistance tant qu'AURA Core ne dispose pas d'un stockage documentaire patient dédié.
 
 ## Lancer localement
 
