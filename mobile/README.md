@@ -16,17 +16,40 @@ Application mobile patient isolée du site web AURA.
 
 Le MVP réutilise le projet Supabase AURA existant, ses RPC et ses règles RLS. Aucune migration de base de données n'est nécessaire. Le module Documents reste volontairement sans persistance tant qu'AURA Core ne dispose pas d'un stockage documentaire patient dédié.
 
-## Lancer localement
+## Test rapide sur iPhone avec Expo Go
+
+Pré-requis : Node.js, l'application Expo Go sur l'iPhone et le dépôt AURA disponible sur l'ordinateur.
 
 ```bash
+git checkout mobile-mvp-20260918
 cd mobile
 cp .env.example .env
-npm install
+npm ci
 npm run typecheck
-npm start
+npm run start:tunnel
 ```
 
-Scannez ensuite le QR code avec Expo Go ou ouvrez un simulateur iOS/Android.
+Scanner ensuite le QR code avec l'iPhone. Le mode `--tunnel` évite que l'iPhone et l'ordinateur aient besoin d'être sur exactement le même réseau local.
+
+## Préparation EAS / TestFlight
+
+Identifiants natifs réservés pour le MVP :
+
+- iOS bundle identifier : `com.auradh.patient`
+- Android application id : `com.auradh.patient`
+
+Les profils EAS sont définis dans `eas.json` :
+
+- `preview` : distribution interne
+- `production` : build destiné aux stores/TestFlight, avec auto-incrément du build
+
+Pour le premier envoi TestFlight, depuis `mobile/` :
+
+```bash
+npx testflight
+```
+
+Cette étape nécessite une connexion à un compte Expo et un compte Apple Developer actif. Expo/EAS gère ensuite la création/signature du build iOS et l'envoi vers App Store Connect/TestFlight.
 
 ## Architecture et isolation
 
