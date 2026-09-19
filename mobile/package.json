@@ -5,9 +5,12 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "expo:config": "expo config --type public",
+    "testflight": "npx testflight"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
