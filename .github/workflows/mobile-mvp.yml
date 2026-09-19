@@ -40,6 +40,9 @@ jobs:
       - name: Typecheck mobile
         run: npm run typecheck
 
+      - name: Validate Expo config
+        run: npm run expo:config > /dev/null
+
       - name: Bundle iOS
         run: npx expo export --platform ios --output-dir dist-ios
 
