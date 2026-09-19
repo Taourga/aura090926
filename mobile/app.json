@@ -7,9 +7,16 @@
     "scheme": "aura",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.auradh.patient",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.auradh.patient",
+      "versionCode": 1,
       "predictiveBackGestureEnabled": false
     }
   }
