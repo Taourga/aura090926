@@ -9,10 +9,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.auradh.patient",
-      "buildNumber": "1",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.auradh.patient",
